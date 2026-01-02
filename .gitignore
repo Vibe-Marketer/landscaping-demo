@@ -37,3 +37,5 @@ Thumbs.db
 # Node (if using Remotion or similar)
 node_modules/
 package-lock.json
+website-automation.json
+.playwright-mcp/
