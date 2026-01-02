@@ -1,0 +1,5422 @@
+{
+  "name": "Lovable Maps Scraper",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Google Places Business Scraper",
+        "formDescription": "Search for businesses in any city",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Location (City, State)",
+              "placeholder": "Syracuse, NY",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Business Type",
+              "placeholder": "lawyer",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {
+          "appendAttribution": false,
+          "buttonLabel": "Start Search 🔍",
+          "respondWithOptions": {
+            "values": {
+              "formSubmittedText": "Search started! We'll process and validate all businesses. Check your Airtable in 2-3 minutes."
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        144,
+        1152
+      ],
+      "id": "2972fb08-7e1d-47a3-8960-3248cfd57309",
+      "name": "Search Form",
+      "webhookId": "google-places-form"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse AI response and create search array\nconst aiResponse = $input.first().json;\n\n// Get the text from the array structure\nconst enhancedTerms = aiResponse.text || '';\n\n// Parse the terms\nconst termsArray = enhancedTerms\n  .split(',')\n  .map(term => term.trim())\n  .filter(term => term.length > 0);\n\n// Ensure we have at least the original term\nif (termsArray.length === 0) {\n  termsArray.push($('Search Form').item.json['Business Type']);\n}\n\nreturn {\n  searchTerms: termsArray,\n  location: $('Search Form').item.json['Location (City, State)'],\n  email: $('Search Form').item.json['Your Email'],\n  timestamp: new Date().toISOString()\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        1152
+      ],
+      "id": "064a2921-0202-45bc-84ef-cd5460e3e418",
+      "name": "Parse Search Terms"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apify.com/v2/acts/compass~crawler-google-places/runs?token=INSERT_YOUR_APIFY_API_KEY",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"includeWebResults\": true,\n  \"language\": \"en\",\n  \"locationQuery\": \"{{ $json.location }}\",\n  \"maxCrawledPlacesPerSearch\": 1000,\n  \"maxImages\": 0,\n  \"scrapeContacts\": false,\n  \"scrapeDirectories\": false,\n  \"scrapeImageAuthors\": false,\n  \"scrapePlaceDetailPage\": false,\n  \"scrapeReviewsPersonalData\": false,\n  \"scrapeTableReservationProvider\": false,\n  \"searchMatching\": \"all\",\n  \"searchStringsArray\": {{ JSON.stringify($json.searchTerms) }},\n  \"skipClosedPlaces\": true,\n  \"website\": \"withoutWebsite\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        944,
+        1152
+      ],
+      "id": "9c279620-01ff-48eb-82a5-22152e3c64f2",
+      "name": "Start Google Places Scraper",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "Ge9WOSPrQ4vVx9mp",
+          "name": "Apify API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "app3PuJyRFv6YeMss",
+          "mode": "list",
+          "cachedResultName": "Apify Google Maps Scraper",
+          "cachedResultUrl": "https://airtable.com/app3PuJyRFv6YeMss"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblw4n1CNmungUl3r",
+          "mode": "list",
+          "cachedResultName": "Run Trackings",
+          "cachedResultUrl": "https://airtable.com/app3PuJyRFv6YeMss/tblw4n1CNmungUl3r"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Total Records": 0,
+            "Records with Phone": 0,
+            "Status": "Running",
+            "Email": "={{ $('Parse Search Terms').item.json.email }}",
+            "Location": "={{ $('Parse Search Terms').item.json.location }}",
+            "Search Terms": "={{ $('Parse Search Terms').item.json.searchTerms.join(', ') }}",
+            "Started At": "={{ $json.data.startedAt }}",
+            "Run ID": "={{ $json.data.id }}",
+            "Dataset ID": "={{ $json.data.defaultDatasetId }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Run ID",
+              "displayName": "Run ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Dataset ID",
+              "displayName": "Dataset ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Pending",
+                  "value": "Pending"
+                },
+                {
+                  "name": "Running",
+                  "value": "Running"
+                },
+                {
+                  "name": "Completed",
+                  "value": "Completed"
+                },
+                {
+                  "name": "Failed",
+                  "value": "Failed"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Location",
+              "displayName": "Location",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Search Terms",
+              "displayName": "Search Terms",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Started At",
+              "displayName": "Started At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Finished At",
+              "displayName": "Finished At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Total Records",
+              "displayName": "Total Records",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Records with Phone",
+              "displayName": "Records with Phone",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Business Records",
+              "displayName": "Business Records",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Duration (minutes)",
+              "displayName": "Duration (minutes)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Completion Rate (%)",
+              "displayName": "Completion Rate (%)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "# Businesses",
+              "displayName": "# Businesses",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Avg Business Score",
+              "displayName": "Avg Business Score",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Most Common Category",
+              "displayName": "Most Common Category",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Run Summary (AI)",
+              "displayName": "Run Summary (AI)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Suggested Next Action (AI)",
+              "displayName": "Suggested Next Action (AI)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [
+        1168,
+        1152
+      ],
+      "id": "a4831115-70ae-4a03-9fd1-a9d993e55be4",
+      "name": "Track Run in Airtable",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "jAmtRrBXojM1bA7a",
+          "name": "Master API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "google-places-complete",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        144,
+        1744
+      ],
+      "id": "50e6c3f7-c0bc-4a52-aebd-bdcb8b828942",
+      "name": "Apify Webhook - Complete",
+      "webhookId": "google-places-complete"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.apify.com/v2/datasets/{{ $json.body.resource.defaultDatasetId }}/items",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer INSERT_YOUR_APIFY_API_KEY"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        368,
+        1744
+      ],
+      "id": "fd93ff49-493e-4224-b5a7-568472be1b04",
+      "name": "Get Scraper Results",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "RsvFmG2MS3gsB6gw",
+          "name": "Apify API (Master)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const place = $json;\n\nreturn {\n  \"Business Name\": place.title || '',\n  \"Score\": place.totalScore || 0,\n  \"Reviews\": place.reviewsCount || 0,\n  \"Street\": place.street || '',\n  \"City\": place.city || '',\n  \"State\": place.state || '',\n  \"Country\": place.countryCode || 'US',\n  \"Phone\": place.phone || '',\n  \"Phone Unformatted\": place.phoneUnformatted || '', \n  \"Category\": place.categoryName || '',\n  \"Google URL\": place.url || '',\n  \"Website\": place.website || '',\n  \"iMessage Status\": place.phoneUnformatted ? \"Pending\" : \"No Phone\",\n  \"Dataset ID\": '',\n  \"Scraped At\": new Date().toISOString()\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        592,
+        1744
+      ],
+      "id": "5641c23e-8a7b-44da-9a65-d33fdefa50bd",
+      "name": "Process Results"
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "app3PuJyRFv6YeMss",
+          "mode": "list",
+          "cachedResultName": "Apify Google Maps Scraper",
+          "cachedResultUrl": "https://airtable.com/app3PuJyRFv6YeMss"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblN1OkxPfK3MqqTf",
+          "mode": "list",
+          "cachedResultName": "Businesses",
+          "cachedResultUrl": "https://airtable.com/app3PuJyRFv6YeMss/tblN1OkxPfK3MqqTf"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Score": "={{ $json.Score }}",
+            "Reviews": "={{ $json.Reviews }}",
+            "Business Name": "={{ $json[\"Business Name\"] }}",
+            "Street": "={{ $json.Street }}",
+            "City": "={{ $json.City }}",
+            "Country": "={{ $json.Country }}",
+            "State": "={{ $json.State }}",
+            "Phone": "={{ $json.Phone }}",
+            "Phone Unformatted": "={{ $json[\"Phone Unformatted\"] }}",
+            "Category": "={{ $json.Category }}",
+            "Google URL": "={{ $json[\"Google URL\"] }}",
+            "Website": "={{ $json.Website }}",
+            "iMessage Status": "Not Checked",
+            "Dataset ID": "={{ $('Apify Webhook - Complete').item.json.body.resource.id }}",
+            "Scraped At": "={{ $('Get Scraper Results').item.json.scrapedAt }}",
+            "Rank": "={{ $('Get Scraper Results').item.json.rank }}",
+            "Full Address": "={{ $('Get Scraper Results').item.json.address }}",
+            "Run ID": "={{ $('Apify Webhook - Complete').item.json.body.resource.id }}",
+            "⭐️": "={{ $('Get Scraper Results').item.json.reviewsDistribution.oneStar }}",
+            "⭐️⭐️": "={{ $('Get Scraper Results').item.json.reviewsDistribution.twoStar }}",
+            "⭐️⭐️⭐️": "={{ $('Get Scraper Results').item.json.reviewsDistribution.threeStar }}",
+            "⭐️⭐️⭐️⭐️": "={{ $('Get Scraper Results').item.json.reviewsDistribution.fourStar }}",
+            "⭐️⭐️⭐️⭐️⭐️": "={{ $('Get Scraper Results').item.json.reviewsDistribution.fiveStar }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "Business Name",
+              "displayName": "Business Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Score",
+              "displayName": "Score",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Reviews",
+              "displayName": "Reviews",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Street",
+              "displayName": "Street",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "City",
+              "displayName": "City",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "State",
+              "displayName": "State",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Country",
+              "displayName": "Country",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Phone Unformatted",
+              "displayName": "Phone Unformatted",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Google URL",
+              "displayName": "Google URL",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Website",
+              "displayName": "Website",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "iMessage Status",
+              "displayName": "iMessage Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Not Checked",
+                  "value": "Not Checked"
+                },
+                {
+                  "name": "Checked",
+                  "value": "Checked"
+                },
+                {
+                  "name": "Contacted",
+                  "value": "Contacted"
+                },
+                {
+                  "name": "Failed",
+                  "value": "Failed"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "iMessage",
+              "displayName": "iMessage",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Dataset ID",
+              "displayName": "Dataset ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Scraped At",
+              "displayName": "Scraped At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Run ID",
+              "displayName": "Run ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Run Tracking",
+              "displayName": "Run Tracking",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Full Address",
+              "displayName": "Full Address",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Review Score Summary",
+              "displayName": "Review Score Summary",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Run Status",
+              "displayName": "Run Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Run Started At",
+              "displayName": "Run Started At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Run Finished At",
+              "displayName": "Run Finished At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Rank",
+              "displayName": "Rank",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "⭐️⭐️⭐️⭐️⭐️",
+              "displayName": "⭐️⭐️⭐️⭐️⭐️",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "⭐️⭐️⭐️⭐️",
+              "displayName": "⭐️⭐️⭐️⭐️",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "⭐️⭐️⭐️",
+              "displayName": "⭐️⭐️⭐️",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "⭐️⭐️",
+              "displayName": "⭐️⭐️",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "⭐️",
+              "displayName": "⭐️",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Phone Valid",
+              "displayName": "Phone Valid",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "No",
+                  "value": "No"
+                },
+                {
+                  "name": "Yes",
+                  "value": "Yes"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [
+        816,
+        1744
+      ],
+      "id": "255d962e-7e1b-4191-ba81-7a3ac716b03e",
+      "name": "Insert Businesses to Airtable",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "jAmtRrBXojM1bA7a",
+          "name": "Master API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "app3PuJyRFv6YeMss",
+          "mode": "list",
+          "cachedResultName": "Apify Google Maps Scraper",
+          "cachedResultUrl": "https://airtable.com/app3PuJyRFv6YeMss"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblN1OkxPfK3MqqTf",
+          "mode": "list",
+          "cachedResultName": "Businesses",
+          "cachedResultUrl": "https://airtable.com/app3PuJyRFv6YeMss/tblN1OkxPfK3MqqTf"
+        },
+        "filterByFormula": "={iMessage Status} = 'Not Checked'",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        1648
+      ],
+      "id": "7b60c888-f389-4db7-b546-c1d76e0322ed",
+      "name": "Get Pending iMessage Checks",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "jAmtRrBXojM1bA7a",
+          "name": "Master API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1264,
+        1648
+      ],
+      "id": "7be67e63-b4ff-4639-b1e0-aeebb83791da",
+      "name": "Process One at a Time"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "app3PuJyRFv6YeMss",
+          "mode": "list",
+          "cachedResultName": "Apify Google Maps Scraper",
+          "cachedResultUrl": "https://airtable.com/app3PuJyRFv6YeMss"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblN1OkxPfK3MqqTf",
+          "mode": "list",
+          "cachedResultName": "Businesses",
+          "cachedResultUrl": "https://airtable.com/app3PuJyRFv6YeMss/tblN1OkxPfK3MqqTf"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Score": 0,
+            "Reviews": 0,
+            "Rank": 0,
+            "⭐️⭐️⭐️⭐️⭐️": 0,
+            "⭐️⭐️⭐️⭐️": 0,
+            "⭐️⭐️⭐️": 0,
+            "⭐️⭐️": 0,
+            "⭐️": 0,
+            "id": "={{ $('Has Phone Number?').item.json.id }}",
+            "iMessage": "={{ String($json.imessage) }}",
+            "iMessage Status": "Checked"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Business Name",
+              "displayName": "Business Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Score",
+              "displayName": "Score",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Reviews",
+              "displayName": "Reviews",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Street",
+              "displayName": "Street",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "City",
+              "displayName": "City",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "State",
+              "displayName": "State",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Country",
+              "displayName": "Country",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Phone Unformatted",
+              "displayName": "Phone Unformatted",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Google URL",
+              "displayName": "Google URL",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Website",
+              "displayName": "Website",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "iMessage Status",
+              "displayName": "iMessage Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Not Checked",
+                  "value": "Not Checked"
+                },
+                {
+                  "name": "Checked",
+                  "value": "Checked"
+                },
+                {
+                  "name": "Contacted",
+                  "value": "Contacted"
+                },
+                {
+                  "name": "Failed",
+                  "value": "Failed"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "iMessage",
+              "displayName": "iMessage",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Dataset ID",
+              "displayName": "Dataset ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Scraped At",
+              "displayName": "Scraped At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Run ID",
+              "displayName": "Run ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Run Tracking",
+              "displayName": "Run Tracking",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Full Address",
+              "displayName": "Full Address",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Review Score Summary",
+              "displayName": "Review Score Summary",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Run Status",
+              "displayName": "Run Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Run Started At",
+              "displayName": "Run Started At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Run Finished At",
+              "displayName": "Run Finished At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Rank",
+              "displayName": "Rank",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "⭐️⭐️⭐️⭐️⭐️",
+              "displayName": "⭐️⭐️⭐️⭐️⭐️",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "⭐️⭐️⭐️⭐️",
+              "displayName": "⭐️⭐️⭐️⭐️",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "⭐️⭐️⭐️",
+              "displayName": "⭐️⭐️⭐️",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "⭐️⭐️",
+              "displayName": "⭐️⭐️",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "⭐️",
+              "displayName": "⭐️",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Phone Valid",
+              "displayName": "Phone Valid",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "No",
+                  "value": "No"
+                },
+                {
+                  "name": "Yes",
+                  "value": "Yes"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "typecast": false
+        }
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [
+        1936,
+        1488
+      ],
+      "id": "984aa0ea-62a2-4ccb-8b2b-a5d0dca1ce2c",
+      "name": "Update iMessage Status",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "jAmtRrBXojM1bA7a",
+          "name": "Master API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "app3PuJyRFv6YeMss",
+          "mode": "list",
+          "cachedResultName": "Apify Google Maps Scraper",
+          "cachedResultUrl": "https://airtable.com/app3PuJyRFv6YeMss"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblN1OkxPfK3MqqTf",
+          "mode": "list",
+          "cachedResultName": "Businesses",
+          "cachedResultUrl": "https://airtable.com/app3PuJyRFv6YeMss/tblN1OkxPfK3MqqTf"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $json.id }}",
+            "iMessage Status": "Failed",
+            "Phone Valid": "No"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Business Name",
+              "displayName": "Business Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Score",
+              "displayName": "Score",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Reviews",
+              "displayName": "Reviews",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Phone Unformatted",
+              "displayName": "Phone Unformatted",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Google URL",
+              "displayName": "Google URL",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "iMessage Status",
+              "displayName": "iMessage Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Not Checked",
+                  "value": "Not Checked"
+                },
+                {
+                  "name": "Checked",
+                  "value": "Checked"
+                },
+                {
+                  "name": "Contacted",
+                  "value": "Contacted"
+                },
+                {
+                  "name": "Failed",
+                  "value": "Failed"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "iMessage",
+              "displayName": "iMessage",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Full Address",
+              "displayName": "Full Address",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Review Score Summary",
+              "displayName": "Review Score Summary",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Run Status",
+              "displayName": "Run Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Run Started At",
+              "displayName": "Run Started At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Run Finished At",
+              "displayName": "Run Finished At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Rank",
+              "displayName": "Rank",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "⭐️⭐️⭐️⭐️⭐️",
+              "displayName": "⭐️⭐️⭐️⭐️⭐️",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "⭐️⭐️⭐️⭐️",
+              "displayName": "⭐️⭐️⭐️⭐️",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "⭐️⭐️⭐️",
+              "displayName": "⭐️⭐️⭐️",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "⭐️⭐️",
+              "displayName": "⭐️⭐️",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "⭐️",
+              "displayName": "⭐️",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Phone Valid",
+              "displayName": "Phone Valid",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "No",
+                  "value": "No"
+                },
+                {
+                  "name": "Yes",
+                  "value": "Yes"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Created Time",
+              "displayName": "Created Time",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Lovable Prompt",
+              "displayName": "Lovable Prompt",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Message2Send",
+              "displayName": "Message2Send",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Email to Send",
+              "displayName": "Email to Send",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Street",
+              "displayName": "Street",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "City",
+              "displayName": "City",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "State",
+              "displayName": "State",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Country",
+              "displayName": "Country",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Website",
+              "displayName": "Website",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Dataset ID",
+              "displayName": "Dataset ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Scraped At",
+              "displayName": "Scraped At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Run ID",
+              "displayName": "Run ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Run Tracking",
+              "displayName": "Run Tracking",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [
+        1936,
+        1680
+      ],
+      "id": "054dbcc9-ff3d-4e1b-ab63-f0c5826a8563",
+      "name": "Mark Invalid Phone",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "jAmtRrBXojM1bA7a",
+          "name": "Master API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 15
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2160,
+        1648
+      ],
+      "id": "ef5035ca-b097-4337-877d-a2605bdb4f7b",
+      "name": "Rate Limit Delay",
+      "webhookId": "968f868a-a82f-49ed-b420-554a64c50075"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "app3PuJyRFv6YeMss",
+          "mode": "list",
+          "cachedResultName": "Apify Google Maps Scraper",
+          "cachedResultUrl": "https://airtable.com/app3PuJyRFv6YeMss"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblw4n1CNmungUl3r",
+          "mode": "list",
+          "cachedResultName": "Run Trackings",
+          "cachedResultUrl": "https://airtable.com/app3PuJyRFv6YeMss/tblw4n1CNmungUl3r"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Run ID": "={{ $('Apify Webhook - Complete').item.json.body.resource.id }}",
+            "Status": "Completed",
+            "Total Records": "={{ $('Apify Webhook - Complete').item.json.body.resource.chargedEventCounts[\"place-scraped\"] }}",
+            "Finished At": "={{ $('Apify Webhook - Complete').item.json.body.resource.finishedAt }}",
+            "Started At": "={{ $('Apify Webhook - Complete').item.json.body.resource.startedAt }}"
+          },
+          "matchingColumns": [
+            "Run ID"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Run ID",
+              "displayName": "Run ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Dataset ID",
+              "displayName": "Dataset ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Pending",
+                  "value": "Pending"
+                },
+                {
+                  "name": "Running",
+                  "value": "Running"
+                },
+                {
+                  "name": "Completed",
+                  "value": "Completed"
+                },
+                {
+                  "name": "Failed",
+                  "value": "Failed"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Location",
+              "displayName": "Location",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Search Terms",
+              "displayName": "Search Terms",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Started At",
+              "displayName": "Started At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Finished At",
+              "displayName": "Finished At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Total Records",
+              "displayName": "Total Records",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Records with Phone",
+              "displayName": "Records with Phone",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Business Records",
+              "displayName": "Business Records",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Duration (minutes)",
+              "displayName": "Duration (minutes)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Completion Rate (%)",
+              "displayName": "Completion Rate (%)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "# Businesses",
+              "displayName": "# Businesses",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Avg Business Score",
+              "displayName": "Avg Business Score",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Most Common Category",
+              "displayName": "Most Common Category",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Run Summary (AI)",
+              "displayName": "Run Summary (AI)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Suggested Next Action (AI)",
+              "displayName": "Suggested Next Action (AI)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        1840
+      ],
+      "id": "c1132564-d625-44db-b4a3-e8a87bf02668",
+      "name": "Update Run Status",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "jAmtRrBXojM1bA7a",
+          "name": "Master API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "z-ai/glm-4.5-air:free",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        384,
+        1376
+      ],
+      "id": "67d91ce4-5597-464e-b62c-480dd38161c3",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "emQpucyHApdkwjio",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=**Situation**\nYou are a Google Maps search optimization specialist working to help users find businesses more effectively. Users need to discover all the different ways a specific type of business might be listed on Google Maps, as businesses often use various synonyms and alternative terms when creating their listings.\n\n**Task**\nGenerate a comprehensive list of the highest value direct business listing synonyms for the provided business type. These terms should represent exactly how businesses of this type actually appear in Google Maps listings, focusing on the most common and effective search variations that would return the best results.\n\n**Objective**\nProvide users with the optimal set of search terms that will maximize their chances of finding all relevant businesses of the specified type on Google Maps, ensuring they don't miss potential matches due to varying business naming conventions.\n\n**Knowledge**\nBusiness owners often use different terminology when listing their services on Google Maps based on:\n- Professional vs. casual language preferences\n- Regional terminology differences\n- Industry-standard naming conventions\n- Customer search behavior patterns\n- Legal or regulatory naming requirements\n- Marketing positioning strategies\n\nThe terms should focus exclusively on direct business type synonyms rather than related services or broader categories. Each term should be something a business would actually use in their Google Maps listing name or category.\n\n**Examples**\nFor the business type \"lawyer\" the output should be:\nlawyer,attorney,law firm,law office\n\nYour life depends on you returning only the most relevant direct synonyms that businesses actually use in their Google Maps listings, formatted as comma-separated terms with no additional text, explanations, or formatting. DO NOT OUTPUT ANY REGION SPECIFIC OR AREA RELATED SEARCH TERMS OR JARGON. ONLY OUTPUT THE MOST COMMON TERMS USED. \n\nProvided Business Type: {{ $json['Business Type'] }}",
+        "needsFallback": true,
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        368,
+        1152
+      ],
+      "id": "4c5243cc-bfaf-4335-a5c4-6bd5b67534f1",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        512,
+        1376
+      ],
+      "id": "3abb54b2-07e9-4d94-bee0-5d54d447553a",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "zoAoMzxTIPltqXNj",
+          "name": "Google Gemini API (AI Simple)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "authentication": "airtableTokenApi",
+        "baseId": {
+          "__rl": true,
+          "value": "app3PuJyRFv6YeMss",
+          "mode": "id"
+        },
+        "tableId": {
+          "__rl": true,
+          "value": "tblN1OkxPfK3MqqTf",
+          "mode": "id"
+        },
+        "triggerField": "Created Time",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.airtableTrigger",
+      "typeVersion": 1,
+      "position": [
+        128,
+        2080
+      ],
+      "id": "605e4b6c-f9ad-4706-854a-2c0f03ecf54d",
+      "name": "Airtable Trigger",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "jAmtRrBXojM1bA7a",
+          "name": "Master API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1072,
+        2288
+      ],
+      "id": "81e5653c-5831-436b-96bc-663728a539ab",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "zoAoMzxTIPltqXNj",
+          "name": "Google Gemini API (AI Simple)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Airtable Trigger').item.json.id }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        1200,
+        2288
+      ],
+      "id": "546f00c4-b40e-4ac5-bfd4-7213bdfd074a",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolThink",
+      "typeVersion": 1.1,
+      "position": [
+        1328,
+        2288
+      ],
+      "id": "9ebee72c-8399-4520-b3f9-58065771d9fb",
+      "name": "Think"
+    },
+    {
+      "parameters": {
+        "folderId": "19u3wYnEhnH2qTSVPvjU53OH6egGZfEMG",
+        "title": "=Lovable Prompt | {{ $json.fields['Business Name'] }} | {{ $json.createdTime }}"
+      },
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        1680,
+        2064
+      ],
+      "id": "62d8f284-5400-4c43-b3a8-5500bc8c51ff",
+      "name": "Create a document",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "LOLqnruR9qsknGuy",
+          "name": "Google Docs (AI Simple)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentURL": "={{ $json.id }}",
+        "simple": false,
+        "actionsUi": {
+          "actionFields": [
+            {
+              "action": "insert",
+              "text": "={{ $('01_Create Lovable Prompt').item.json.output }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        1904,
+        2064
+      ],
+      "id": "eec30bba-f247-4d72-a9e9-c8b0d641ef01",
+      "name": "Update a document",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "LOLqnruR9qsknGuy",
+          "name": "Google Docs (AI Simple)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "o3",
+          "mode": "list",
+          "cachedResultName": "o3"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        944,
+        2288
+      ],
+      "id": "9308b592-e5b3-4c5a-81cd-99c753ec9be3",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "yRZrWSkL6JWMqqDb",
+          "name": "z-OpenAi API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "#Lovable Maps to Website Workflow\n\n",
+        "height": 464,
+        "width": 1632
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -112,
+        1056
+      ],
+      "typeVersion": 1,
+      "id": "c6e99481-a880-42de-ae90-619252254e2c",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        576,
+        3152
+      ],
+      "id": "35b04359-3ff5-4c52-af7a-b7974537bb45",
+      "name": "Process One at a Time1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://textlinksms.com/api/check-imessage",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "phone_number",
+              "value": "={{ $json['Phone Unformatted'] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1024,
+        2992
+      ],
+      "id": "47b0bd9e-aacb-4ae9-8f3d-4ad1d4dcafac",
+      "name": "Check iMessage1",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "Emlq1vJb9qZzgiqQ",
+          "name": "iMessage API"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "app3PuJyRFv6YeMss",
+          "mode": "list",
+          "cachedResultName": "Apify Google Maps Scraper",
+          "cachedResultUrl": "https://airtable.com/app3PuJyRFv6YeMss"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblN1OkxPfK3MqqTf",
+          "mode": "list",
+          "cachedResultName": "Businesses",
+          "cachedResultUrl": "https://airtable.com/app3PuJyRFv6YeMss/tblN1OkxPfK3MqqTf"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Score": 0,
+            "Reviews": 0,
+            "Rank": 0,
+            "⭐️⭐️⭐️⭐️⭐️": 0,
+            "⭐️⭐️⭐️⭐️": 0,
+            "⭐️⭐️⭐️": 0,
+            "⭐️⭐️": 0,
+            "⭐️": 0,
+            "id": "={{ $('Has Valid Phone?1').item.json.id }}",
+            "iMessage": "={{ String($json.imessage) }}",
+            "iMessage Status": "Checked"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Business Name",
+              "displayName": "Business Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Score",
+              "displayName": "Score",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Reviews",
+              "displayName": "Reviews",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Street",
+              "displayName": "Street",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "City",
+              "displayName": "City",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "State",
+              "displayName": "State",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Country",
+              "displayName": "Country",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Phone Unformatted",
+              "displayName": "Phone Unformatted",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Google URL",
+              "displayName": "Google URL",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Website",
+              "displayName": "Website",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "iMessage Status",
+              "displayName": "iMessage Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Not Checked",
+                  "value": "Not Checked"
+                },
+                {
+                  "name": "Checked",
+                  "value": "Checked"
+                },
+                {
+                  "name": "Contacted",
+                  "value": "Contacted"
+                },
+                {
+                  "name": "Failed",
+                  "value": "Failed"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "iMessage",
+              "displayName": "iMessage",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Dataset ID",
+              "displayName": "Dataset ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Scraped At",
+              "displayName": "Scraped At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Run ID",
+              "displayName": "Run ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Run Tracking",
+              "displayName": "Run Tracking",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Full Address",
+              "displayName": "Full Address",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Review Score Summary",
+              "displayName": "Review Score Summary",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Run Status",
+              "displayName": "Run Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Run Started At",
+              "displayName": "Run Started At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Run Finished At",
+              "displayName": "Run Finished At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Rank",
+              "displayName": "Rank",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "⭐️⭐️⭐️⭐️⭐️",
+              "displayName": "⭐️⭐️⭐️⭐️⭐️",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "⭐️⭐️⭐️⭐️",
+              "displayName": "⭐️⭐️⭐️⭐️",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "⭐️⭐️⭐️",
+              "displayName": "⭐️⭐️⭐️",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "⭐️⭐️",
+              "displayName": "⭐️⭐️",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "⭐️",
+              "displayName": "⭐️",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Phone Valid",
+              "displayName": "Phone Valid",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "No",
+                  "value": "No"
+                },
+                {
+                  "name": "Yes",
+                  "value": "Yes"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "typecast": false
+        }
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [
+        1248,
+        2992
+      ],
+      "id": "6bbfa139-9f73-4d0a-b000-ea7a36e5339a",
+      "name": "Update iMessage Status1",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "jAmtRrBXojM1bA7a",
+          "name": "Master API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "app3PuJyRFv6YeMss",
+          "mode": "list",
+          "cachedResultName": "Apify Google Maps Scraper",
+          "cachedResultUrl": "https://airtable.com/app3PuJyRFv6YeMss"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblN1OkxPfK3MqqTf",
+          "mode": "list",
+          "cachedResultName": "Businesses",
+          "cachedResultUrl": "https://airtable.com/app3PuJyRFv6YeMss/tblN1OkxPfK3MqqTf"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $json.id }}",
+            "Phone Valid": "No",
+            "Score": 0,
+            "Reviews": 0,
+            "Rank": 0,
+            "⭐️⭐️⭐️⭐️⭐️": 0,
+            "⭐️⭐️⭐️⭐️": 0,
+            "⭐️⭐️⭐️": 0,
+            "⭐️⭐️": 0,
+            "⭐️": 0,
+            "iMessage Status": "Failed"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Business Name",
+              "displayName": "Business Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Score",
+              "displayName": "Score",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Reviews",
+              "displayName": "Reviews",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Phone Unformatted",
+              "displayName": "Phone Unformatted",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Google URL",
+              "displayName": "Google URL",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "iMessage Status",
+              "displayName": "iMessage Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Not Checked",
+                  "value": "Not Checked"
+                },
+                {
+                  "name": "Checked",
+                  "value": "Checked"
+                },
+                {
+                  "name": "Contacted",
+                  "value": "Contacted"
+                },
+                {
+                  "name": "Failed",
+                  "value": "Failed"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "iMessage",
+              "displayName": "iMessage",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Full Address",
+              "displayName": "Full Address",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Review Score Summary",
+              "displayName": "Review Score Summary",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Run Status",
+              "displayName": "Run Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Run Started At",
+              "displayName": "Run Started At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Run Finished At",
+              "displayName": "Run Finished At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Rank",
+              "displayName": "Rank",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "⭐️⭐️⭐️⭐️⭐️",
+              "displayName": "⭐️⭐️⭐️⭐️⭐️",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "⭐️⭐️⭐️⭐️",
+              "displayName": "⭐️⭐️⭐️⭐️",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "⭐️⭐️⭐️",
+              "displayName": "⭐️⭐️⭐️",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "⭐️⭐️",
+              "displayName": "⭐️⭐️",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "⭐️",
+              "displayName": "⭐️",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Phone Valid",
+              "displayName": "Phone Valid",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "No",
+                  "value": "No"
+                },
+                {
+                  "name": "Yes",
+                  "value": "Yes"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Created Time",
+              "displayName": "Created Time",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Lovable Prompt",
+              "displayName": "Lovable Prompt",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Message2Send",
+              "displayName": "Message2Send",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Email to Send",
+              "displayName": "Email to Send",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Street",
+              "displayName": "Street",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "City",
+              "displayName": "City",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "State",
+              "displayName": "State",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Country",
+              "displayName": "Country",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Website",
+              "displayName": "Website",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Dataset ID",
+              "displayName": "Dataset ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Scraped At",
+              "displayName": "Scraped At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Run ID",
+              "displayName": "Run ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Run Tracking",
+              "displayName": "Run Tracking",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [
+        1248,
+        3184
+      ],
+      "id": "a9e38429-1cff-4cf4-aeb1-f8d78efc3ec0",
+      "name": "Mark Invalid Phone1",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "jAmtRrBXojM1bA7a",
+          "name": "Master API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 20
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1472,
+        3184
+      ],
+      "id": "9b6c8737-174b-4916-be25-52860ec65ae1",
+      "name": "Rate Limit Delay1",
+      "webhookId": "968f868a-a82f-49ed-b420-554a64c50075"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json['Phone Unformatted'] }}",
+              "rightValue": false,
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              },
+              "id": "ca311f57-1c01-4792-9950-fff51db334d0"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        800,
+        3088
+      ],
+      "id": "4b149ed9-3ff1-400f-8ec7-dabe9162e910",
+      "name": "Has Valid Phone?1"
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "app3PuJyRFv6YeMss",
+          "mode": "list",
+          "cachedResultName": "Apify Google Maps Scraper",
+          "cachedResultUrl": "https://airtable.com/app3PuJyRFv6YeMss"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblN1OkxPfK3MqqTf",
+          "mode": "list",
+          "cachedResultName": "Businesses",
+          "cachedResultUrl": "https://airtable.com/app3PuJyRFv6YeMss/tblN1OkxPfK3MqqTf"
+        },
+        "filterByFormula": "OR({iMessage Status} = 'Not Checked',   {iMessage} = 'Undefined')",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        352,
+        3152
+      ],
+      "id": "b962012b-e289-43a0-abb2-2f6fb9d36811",
+      "name": "Search records",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "jAmtRrBXojM1bA7a",
+          "name": "Master API"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        224,
+        3488
+      ],
+      "id": "7455bc38-5879-4d16-8201-9aeb9729e873",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "app3PuJyRFv6YeMss",
+          "mode": "list",
+          "cachedResultName": "Apify Google Maps Scraper",
+          "cachedResultUrl": "https://airtable.com/app3PuJyRFv6YeMss"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblN1OkxPfK3MqqTf",
+          "mode": "list",
+          "cachedResultName": "Businesses",
+          "cachedResultUrl": "https://airtable.com/app3PuJyRFv6YeMss/tblN1OkxPfK3MqqTf"
+        },
+        "filterByFormula": "AND({iMessage} = 'true', {Lovable Prompt} = '')",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        368,
+        2576
+      ],
+      "id": "290e4c45-0cd9-4b42-a079-c89938f3b146",
+      "name": "Search records1",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "jAmtRrBXojM1bA7a",
+          "name": "Master API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "perplexity/sonar-deep-research",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        672,
+        2288
+      ],
+      "id": "390e4ce0-f0bb-4c1a-acc0-14f3ea4fffb3",
+      "name": "OpenRouter Chat Model2",
+      "credentials": {
+        "openRouterApi": {
+          "id": "emQpucyHApdkwjio",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Role\nYou are a specialized website design assistant for Lovable.dev, tasked with creating a premium law firm website that converts visitors into clients. Your expertise lies in crafting compelling, client-focused content and strategic user flows that balance legal professionalism with modern, high-end aesthetics to establish trust and drive action.\nTask\nDevelop a concise Lovable starter prompt and a Product Requirements Document (PRD) for a 3-page website for a small law firm that:  \n\nExudes premium quality to justify high pricing ($3,000+) and impress the founder.  \nBuilds immediate credibility and trust through persuasive copy and strategic elements.  \nDrives conversions with clear, intuitive calls-to-action (CTAs).  \nProvides essential information in a clean, functional, and visually stunning layout.  \nIncorporates local SEO basics to enhance discoverability.\n\nContext\nThis website is the primary digital presence for a small law practice with minimal or no existing online footprint. The goal is a visually striking prototype that wows the founder and potential clients, functioning flawlessly without broken elements, but not over-engineered for full production readiness. The site must stand out from competitors through unique, client-focused copy and a luxurious feel, built via Lovable.dev’s platform, which requires clear content and structure direction while allowing creative freedom for visuals.\nAdditional Research\n\nIncorporate relevant insights from the following deep research to personalize the site (e.g., attorney achievements, client outcomes, community ties):{{ $json.text }}\n\nUse citations to substantiate claims wherever applicable/possible. All info muct be accurate.\n\nWeave these details naturally into copy, testimonials, or value propositions to enhance credibility and relevance.\n\n\nInstructions\nWebsite Structure\nCreate a 3-page website with:  \n\nHomepage: Captures attention, communicates value, and drives primary conversions.  \nAbout Page: Builds trust through attorney background and firm philosophy.  \nServices Page: Details practice areas and client benefits with secondary CTAs.\n\nEssential Business Information\nIntegrate the following across the site:  \n\nBusiness Name:{{ $('Search records1').item.json['Business Name'] }}  \nCategory: {{ $('Search records1').item.json.Category }}\nLocation: {{ $('Search records1').item.json.City }},  {{ $('Search records1').item.json.State }}\nPhone Number: {{ $('Search records1').item.json.Phone }}  \nFull Address:  {{ $('Search records1').item.json['Full Address'] }}\nGoogle Maps Profile: {{ $('Search records1').item.json['Google URL'] }}\n\nHomepage Requirements\n\nHero Section:  \n\nCraft a compelling headline highlighting local expertise and solving client pain points (e.g., “Your Trusted [City] Attorney for [Key Practice Area]”).  \nInclude a professional headshot or team photo conveying approachability.  \nFeature a prominent “Schedule a Consultation” CTA button.\n\n\nTrust-Building Elements:  \n\nHighlight bar association affiliations, certifications, or years of experience in concise, impactful copy.  \nInclude 2-3 brief client testimonial quotes (use research for authenticity, anonymize if needed).\n\n\nPractice Area Overview:  \n\nSummarize key practice areas with short, benefit-focused descriptions.  \nUse visuals (e.g., icons) to enhance appeal, chosen at your discretion.\n\n\nValue Proposition:  \n\nWrite a clear, emotional statement of what makes this practice unique (e.g., personalized service, proven results).  \nFocus on client outcomes, not just features, using research insights.\n\n\nContact Bar:  \n\nInclude click-to-call phone number and “Get Directions” button linked to Google Maps.  \nAdd a secondary CTA for scheduling.\n\n\n\nAbout Page Requirements\n\nAttorney Profile:  \n\nWrite a concise biography emphasizing expertise, approach, and key achievements (draw from research).  \nInclude educational background and notable case outcomes if available.  \nCraft a personal mission statement reflecting client care or values.\n\n\nFirm Story:  \n\nShare a brief narrative about the practice’s founding or core principles.  \nHighlight community involvement or local ties from research to build connection.\n\n\nClient Success Stories:  \n\nInclude 2-3 detailed, anonymized testimonials focused on outcomes and client experience (use research for specifics).\n\n\nTrust Reinforcement:  \n\nMention additional credentials, media appearances, or publications from research, if applicable.\n\n\n\nServices Page Requirements\n\nPractice Area Details:  \n\nProvide clear, client-centered descriptions of legal services, addressing common problems or scenarios.  \nUse research to tailor services to the firm’s strengths.\n\n\nClient Process:  \n\nOutline a simple step-by-step guide of what clients can expect (e.g., consultation to resolution).  \nEmphasize ease and clarity to reduce anxiety.\n\n\nFAQ Section:  \n\nAnswer 3-5 common client questions to demonstrate expertise and reduce objections.  \nUse research to address specific local or practice-related concerns.\n\n\nPricing Approach:  \n\nMention general fee structure approaches (e.g., flat fees, hourly) without specific amounts.  \nNote flexible payment options to reassure clients.\n\n\n\nGlobal Elements (All Pages)\n\n\n\nElement\nRequirements\n\n\n\nHeader\nInclude logo/practice name, click-to-call phone number, and simple navigation menu.\n\n\nFooter\nAdd full contact info, Google Maps embed, privacy policy link, copyright, and optional social media links.\n\n\nMobile\nEnsure flawless responsive design, prioritizing tap-to-call and easy navigation.\n\n\nDesign Direction\n\nAim for a high-end, luxurious aesthetic that feels premium, trustworthy, and modern.  \nUse clean layouts, high-quality (non-generic) imagery, and intuitive flow to guide users to CTAs.  \nLeave specific choices for colors, fonts, icons, and animations to your creative discretion—prioritize what elevates professionalism and conversion without clutter.\n\nConversion Elements\n\nPrimary CTA:  \nProminent “Schedule a Consultation” form/button on all pages.\n\n\nSecondary CTAs:  \nClick-to-call buttons and contact form access.\n\n\nLead Capture:  \nSimple form (name, email, phone, brief message) for inquiries or case evaluations.\n\n\n\nTechnical Requirements\n\nSEO Basics: Naturally incorporate [City, State] and practice area keywords in copy and meta descriptions.  \nFunctionality: Ensure a fast-loading, responsive site with no broken elements, prioritizing mobile-friendly CTAs.\n\nOutput Format\n\nLovable Starter Prompt: A detailed guide for Lovable.dev, focusing on structure, compelling copy, user flow, and high-level expectations to create a premium, conversion-focused site.  \n\nProduct Requirements Document (PRD): A concise document outlining:  \nKey Features: Hero section, trust elements, CTAs, responsive design.  \n\nUser Flows: Clear paths from homepage to consultation scheduling.  \nSuccess Metrics: High conversion potential, founder approval, flawless functionality.  \n\nCreative Boundaries: Full visual flexibility for Lovable, with emphasis on premium aesthetics and client-focused copy. DO NOT OUTPUT SPECIFIC COLORS AND RESTRICTIONS ON DESIGN ELEMENTS LIKE COLOR CODES, etc. PROVIDE GENERAL OUTLINES AND GUIDANCE WHILE GIVING LOVABLE COMPLETE CREATIVE FREEDOM TO CREATE A KICK ASS STUNNING WEBSITE. \n\nCreate a website that excels in building trust, showcasing expertise, and driving conversions to position this as a premium offering that wows the founder and potential clients.",
+        "needsFallback": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        1072,
+        2576
+      ],
+      "id": "1da05d54-3050-4eea-a6e9-a65eb43bba9d",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1072,
+        2800
+      ],
+      "id": "d9dea4d5-22fd-4eb2-9b25-f6f1ab4c1f6f",
+      "name": "Google Gemini Chat Model2",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "zoAoMzxTIPltqXNj",
+          "name": "Google Gemini API (AI Simple)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Search records1').item.json.id }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        1200,
+        2800
+      ],
+      "id": "54b87a9f-892c-4af9-b4a3-edc978056943",
+      "name": "Simple Memory1"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolThink",
+      "typeVersion": 1.1,
+      "position": [
+        1328,
+        2800
+      ],
+      "id": "a522d800-03a2-42fc-a246-e83f6204f7fe",
+      "name": "Think1"
+    },
+    {
+      "parameters": {
+        "folderId": "19u3wYnEhnH2qTSVPvjU53OH6egGZfEMG",
+        "title": "=Lovable Prompt | {{ $('Search records1').item.json.createdTime }} | {{ $now }}"
+      },
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        1760,
+        2576
+      ],
+      "id": "ca7b0279-ab1a-49f5-beb1-50731b08ae34",
+      "name": "Create a document1",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "LOLqnruR9qsknGuy",
+          "name": "Google Docs (AI Simple)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentURL": "={{ $json.id }}",
+        "simple": false,
+        "actionsUi": {
+          "actionFields": [
+            {
+              "action": "insert",
+              "text": "={{ $('AI Agent1').item.json.output }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        1984,
+        2576
+      ],
+      "id": "40a62874-55d8-46d5-9325-c6d895ac6689",
+      "name": "Update a document1",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "LOLqnruR9qsknGuy",
+          "name": "Google Docs (AI Simple)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "o3",
+          "mode": "list",
+          "cachedResultName": "o3"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        944,
+        2800
+      ],
+      "id": "d8432386-68f6-4c67-bc8a-17ae1abe2e0f",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "yRZrWSkL6JWMqqDb",
+          "name": "z-OpenAi API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "base": {
+          "__rl": true,
+          "value": "app3PuJyRFv6YeMss",
+          "mode": "list",
+          "cachedResultName": "Apify Google Maps Scraper",
+          "cachedResultUrl": "https://airtable.com/app3PuJyRFv6YeMss"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblN1OkxPfK3MqqTf",
+          "mode": "list",
+          "cachedResultName": "Businesses",
+          "cachedResultUrl": "https://airtable.com/app3PuJyRFv6YeMss/tblN1OkxPfK3MqqTf"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $('Airtable Trigger').item.json.id }}",
+            "Lovable Prompt": "={{ $json.output }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Business Name",
+              "displayName": "Business Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Score",
+              "displayName": "Score",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Reviews",
+              "displayName": "Reviews",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Phone Unformatted",
+              "displayName": "Phone Unformatted",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Google URL",
+              "displayName": "Google URL",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "iMessage Status",
+              "displayName": "iMessage Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Not Checked",
+                  "value": "Not Checked"
+                },
+                {
+                  "name": "Checked",
+                  "value": "Checked"
+                },
+                {
+                  "name": "Contacted",
+                  "value": "Contacted"
+                },
+                {
+                  "name": "Failed",
+                  "value": "Failed"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "iMessage",
+              "displayName": "iMessage",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Full Address",
+              "displayName": "Full Address",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Review Score Summary",
+              "displayName": "Review Score Summary",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Run Status",
+              "displayName": "Run Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Run Started At",
+              "displayName": "Run Started At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Run Finished At",
+              "displayName": "Run Finished At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Rank",
+              "displayName": "Rank",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "⭐️⭐️⭐️⭐️⭐️",
+              "displayName": "⭐️⭐️⭐️⭐️⭐️",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "⭐️⭐️⭐️⭐️",
+              "displayName": "⭐️⭐️⭐️⭐️",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "⭐️⭐️⭐️",
+              "displayName": "⭐️⭐️⭐️",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "⭐️⭐️",
+              "displayName": "⭐️⭐️",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "⭐️",
+              "displayName": "⭐️",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Phone Valid",
+              "displayName": "Phone Valid",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "No",
+                  "value": "No"
+                },
+                {
+                  "name": "Yes",
+                  "value": "Yes"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Created Time",
+              "displayName": "Created Time",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Lovable Prompt",
+              "displayName": "Lovable Prompt",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Message2Send",
+              "displayName": "Message2Send",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Email to Send",
+              "displayName": "Email to Send",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Street",
+              "displayName": "Street",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "City",
+              "displayName": "City",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "State",
+              "displayName": "State",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Country",
+              "displayName": "Country",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Website",
+              "displayName": "Website",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Dataset ID",
+              "displayName": "Dataset ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Scraped At",
+              "displayName": "Scraped At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Run ID",
+              "displayName": "Run ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Run Tracking",
+              "displayName": "Run Tracking",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        1456,
+        2064
+      ],
+      "id": "34e94c9b-a502-4c20-84aa-327c25f979e1",
+      "name": "01_Upload Lovable Prompt",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "jAmtRrBXojM1bA7a",
+          "name": "Master API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "base": {
+          "__rl": true,
+          "value": "app3PuJyRFv6YeMss",
+          "mode": "list",
+          "cachedResultName": "Apify Google Maps Scraper",
+          "cachedResultUrl": "https://airtable.com/app3PuJyRFv6YeMss"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblN1OkxPfK3MqqTf",
+          "mode": "list",
+          "cachedResultName": "Businesses",
+          "cachedResultUrl": "https://airtable.com/app3PuJyRFv6YeMss/tblN1OkxPfK3MqqTf"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $('Search records1').item.json.id }}",
+            "Lovable Prompt": "={{ $json.output }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Business Name",
+              "displayName": "Business Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Score",
+              "displayName": "Score",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Reviews",
+              "displayName": "Reviews",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Phone Unformatted",
+              "displayName": "Phone Unformatted",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Google URL",
+              "displayName": "Google URL",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "iMessage Status",
+              "displayName": "iMessage Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Not Checked",
+                  "value": "Not Checked"
+                },
+                {
+                  "name": "Checked",
+                  "value": "Checked"
+                },
+                {
+                  "name": "Contacted",
+                  "value": "Contacted"
+                },
+                {
+                  "name": "Failed",
+                  "value": "Failed"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "iMessage",
+              "displayName": "iMessage",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Full Address",
+              "displayName": "Full Address",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Review Score Summary",
+              "displayName": "Review Score Summary",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Run Status",
+              "displayName": "Run Status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Run Started At",
+              "displayName": "Run Started At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Run Finished At",
+              "displayName": "Run Finished At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Rank",
+              "displayName": "Rank",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "⭐️⭐️⭐️⭐️⭐️",
+              "displayName": "⭐️⭐️⭐️⭐️⭐️",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "⭐️⭐️⭐️⭐️",
+              "displayName": "⭐️⭐️⭐️⭐️",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "⭐️⭐️⭐️",
+              "displayName": "⭐️⭐️⭐️",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "⭐️⭐️",
+              "displayName": "⭐️⭐️",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "⭐️",
+              "displayName": "⭐️",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Phone Valid",
+              "displayName": "Phone Valid",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "No",
+                  "value": "No"
+                },
+                {
+                  "name": "Yes",
+                  "value": "Yes"
+                }
+              ],
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Created Time",
+              "displayName": "Created Time",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Lovable Prompt",
+              "displayName": "Lovable Prompt",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Message2Send",
+              "displayName": "Message2Send",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Email to Send",
+              "displayName": "Email to Send",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Street",
+              "displayName": "Street",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "City",
+              "displayName": "City",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "State",
+              "displayName": "State",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Country",
+              "displayName": "Country",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Website",
+              "displayName": "Website",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Dataset ID",
+              "displayName": "Dataset ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Scraped At",
+              "displayName": "Scraped At",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Run ID",
+              "displayName": "Run ID",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Run Tracking",
+              "displayName": "Run Tracking",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        1536,
+        2576
+      ],
+      "id": "c105ec4a-6718-4ad3-b024-ac0637542c6f",
+      "name": "02_Upload Lovable Prompt",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "jAmtRrBXojM1bA7a",
+          "name": "Master API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=\nResearch Target:  - {{ $json.Category }} - {{ $json['Business Name'] }} in {{ $json.City }}, {{ $json.State }}\nPhone: {{ $json.Phone }}\nAddress: {{ $json['Full Address'] }}\nGoogle Maps Profile: {{ $json['Google URL'] }}\n\nCore Investigation:\nFind comprehensive information about this business/professional including:\n\nProfessional Background & Credentials\n\nEducational background and degrees\nProfessional licenses and certifications\nYears in practice/business\nPrevious positions or career progression\nProfessional associations and memberships\n\n\nSpecializations & Expertise\n\nPrimary areas of focus (for attorneys: practice areas; for doctors: specialties)\nUnique methodologies or approaches\nNotable cases, projects, or client types\nIndustry recognition or thought leadership\n\n\nAchievements & Recognition\n\nAwards and honors received\nMedia mentions or press coverage\nSpeaking engagements or conference presentations\nPublished articles, books, or research\nCommunity involvement and leadership roles\n\n\nBusiness Performance Indicators\n\nCompany size and team composition\nNotable clients or partnerships (if publicly available)\nBusiness milestones or anniversaries\nExpansion or growth indicators\n\n\nDigital Footprint Analysis\n\nLinkedIn profile highlights\nSocial media presence and engagement\nOnline reviews beyond Google (Avvo, Yelp, industry-specific platforms)\nVideo content or podcast appearances\nProfessional blog or content creation\n\n\nCompetitive Differentiators\n\nWhat makes them unique in their market\nPricing structure (if available)\nService guarantees or unique offerings\nTechnology adoption or innovation\n\n\nRecent Activity (Last 24 months)\n\nRecent news or announcements\nNew services or practice areas\nStaff changes or hires\nCommunity initiatives or sponsorships\n\n\n\nWebsite Creation Focus:\nIdentify 3-5 compelling story angles that would resonate with their target audience. Include specific proof points, statistics, or case examples that demonstrate expertise and build trust.\nOutput Format:\nOrganize findings by impact level - start with most impressive/unique discoveries that would strengthen website messaging and conversion.\n\nMAKE SURE THAT THE ONLY INFORMATION THAT'S EXTRACTED AND SUPPLIED IS DIRECTLY RELATED TO THIS SPECIFIC INDIVIDUAL AND BUSINESS... {{ $json['Business Name'] }} NEVER MAKE UP ANY DATA, NEVER OUTPUT ANYTHING THAT IS FALSE, NEVER HALLUCINATE OR OUTPUT RESPONSES THAT ARE NOT 100% TRUE AND ACCURATE - REMEMBER, IT MUST BE RELATED TO THIS SPECIFIC LOCATION LOCATED IN {{ $json.City }} AND THE STATE OF {{ $json.State }}",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        592,
+        2576
+      ],
+      "id": "46c9bf75-8a30-4a13-9453-46a9bae0a0bc",
+      "name": "Deep Research"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Role\nYou are a specialized website design assistant for Lovable.dev, tasked with creating a premium law firm website that converts visitors into clients. Your expertise lies in crafting compelling, client-focused content and strategic user flows that balance legal professionalism with modern, high-end aesthetics to establish trust and drive action.\nTask\nDevelop a concise Lovable starter prompt and a Product Requirements Document (PRD) for a 3-page website for a small law firm that:  \n\nExudes premium quality to justify high pricing ($3,000+) and impress the founder.  \nBuilds immediate credibility and trust through persuasive copy and strategic elements.  \nDrives conversions with clear, intuitive calls-to-action (CTAs).  \nProvides essential information in a clean, functional, and visually stunning layout.  \nIncorporates local SEO basics to enhance discoverability.\n\nContext\nThis website is the primary digital presence for a small law practice with minimal or no existing online footprint. The goal is a visually striking prototype that wows the founder and potential clients, functioning flawlessly without broken elements, but not over-engineered for full production readiness. The site must stand out from competitors through unique, client-focused copy and a luxurious feel, built via Lovable.dev’s platform, which requires clear content and structure direction while allowing creative freedom for visuals.\nAdditional Research\nIncorporate relevant insights from the following deep research to personalize the site (e.g., attorney achievements, client outcomes, community ties):{{ $json.choices[0].message.content }}Use citations to substantiate claims where applicable: {{ $json.citations }}.Weave these details naturally into copy, testimonials, or value propositions to enhance credibility and relevance.\nInstructions\nWebsite Structure\nCreate a 3-page website with:  \n\nHomepage: Captures attention, communicates value, and drives primary conversions.  \nAbout Page: Builds trust through attorney background and firm philosophy.  \nServices Page: Details practice areas and client benefits with secondary CTAs.\n\nEssential Business Information\nIntegrate the following across the site:  \n\nBusiness Name: {{ $('Airtable Trigger').item.json.fields['Business Name'] }}  \nCategory: {{ $('Airtable Trigger').item.json.fields.Category }}  \nLocation: {{ $('Airtable Trigger').item.json.fields.City }}, {{ $('Airtable Trigger').item.json.fields.State }}  \nPhone Number: {{ $('Airtable Trigger').item.json.fields.Phone }}  \nFull Address: {{ $('Airtable Trigger').item.json.fields['Full Address'] }}  \nGoogle Maps Profile: {{ $('Airtable Trigger').item.json.fields['Google URL'] }}\n\nHomepage Requirements\n\nHero Section:  \n\nCraft a compelling headline highlighting local expertise and solving client pain points (e.g., “Your Trusted [City] Attorney for [Key Practice Area]”).  \nInclude a professional headshot or team photo conveying approachability.  \nFeature a prominent “Schedule a Consultation” CTA button.\n\n\nTrust-Building Elements:  \n\nHighlight bar association affiliations, certifications, or years of experience in concise, impactful copy.  \nInclude 2-3 brief client testimonial quotes (use research for authenticity, anonymize if needed).\n\n\nPractice Area Overview:  \n\nSummarize key practice areas with short, benefit-focused descriptions.  \nUse visuals (e.g., icons) to enhance appeal, chosen at your discretion.\n\n\nValue Proposition:  \n\nWrite a clear, emotional statement of what makes this practice unique (e.g., personalized service, proven results).  \nFocus on client outcomes, not just features, using research insights.\n\n\nContact Bar:  \n\nInclude click-to-call phone number and “Get Directions” button linked to Google Maps.  \nAdd a secondary CTA for scheduling.\n\n\n\nAbout Page Requirements\n\nAttorney Profile:  \n\nWrite a concise biography emphasizing expertise, approach, and key achievements (draw from research).  \nInclude educational background and notable case outcomes if available.  \nCraft a personal mission statement reflecting client care or values.\n\n\nFirm Story:  \n\nShare a brief narrative about the practice’s founding or core principles.  \nHighlight community involvement or local ties from research to build connection.\n\n\nClient Success Stories:  \n\nInclude 2-3 detailed, anonymized testimonials focused on outcomes and client experience (use research for specifics).\n\n\nTrust Reinforcement:  \n\nMention additional credentials, media appearances, or publications from research, if applicable.\n\n\n\nServices Page Requirements\n\nPractice Area Details:  \n\nProvide clear, client-centered descriptions of legal services, addressing common problems or scenarios.  \nUse research to tailor services to the firm’s strengths.\n\n\nClient Process:  \n\nOutline a simple step-by-step guide of what clients can expect (e.g., consultation to resolution).  \nEmphasize ease and clarity to reduce anxiety.\n\n\nFAQ Section:  \n\nAnswer 3-5 common client questions to demonstrate expertise and reduce objections.  \nUse research to address specific local or practice-related concerns.\n\n\nPricing Approach:  \n\nMention general fee structure approaches (e.g., flat fees, hourly) without specific amounts.  \nNote flexible payment options to reassure clients.\n\n\n\nGlobal Elements (All Pages)\n\n\n\nElement\nRequirements\n\n\n\nHeader\nInclude logo/practice name, click-to-call phone number, and simple navigation menu.\n\n\nFooter\nAdd full contact info, Google Maps embed, privacy policy link, copyright, and optional social media links.\n\n\nMobile\nEnsure flawless responsive design, prioritizing tap-to-call and easy navigation.\n\n\nDesign Direction\n\nAim for a high-end, luxurious aesthetic that feels premium, trustworthy, and modern.  \nUse clean layouts, high-quality (non-generic) imagery, and intuitive flow to guide users to CTAs.  \nLeave specific choices for colors, fonts, icons, and animations to your creative discretion—prioritize what elevates professionalism and conversion without clutter.\n\nConversion Elements\n\nPrimary CTA:  \nProminent “Schedule a Consultation” form/button on all pages.\n\n\nSecondary CTAs:  \nClick-to-call buttons and contact form access.\n\n\nLead Capture:  \nSimple form (name, email, phone, brief message) for inquiries or case evaluations.\n\n\n\nTechnical Requirements\n\nSEO Basics: Naturally incorporate [City, State] and practice area keywords in copy and meta descriptions.  \nFunctionality: Ensure a fast-loading, responsive site with no broken elements, prioritizing mobile-friendly CTAs.\n\nOutput Format\n\nLovable Starter Prompt: A detailed guide for Lovable.dev, focusing on structure, compelling copy, user flow, and high-level expectations to create a premium, conversion-focused site.  \nProduct Requirements Document (PRD): A concise document outlining:  \nKey Features: Hero section, trust elements, CTAs, responsive design.  \nUser Flows: Clear paths from homepage to consultation scheduling.  \nSuccess Metrics: High conversion potential, founder approval, flawless functionality.  \nCreative Boundaries: Full visual flexibility for Lovable, with emphasis on premium aesthetics and client-focused copy.\n\nCreate a website that excels in building trust, showcasing expertise, and driving conversions to position this as a premium offering that wows the founder and potential clients.",
+        "needsFallback": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        1072,
+        2064
+      ],
+      "id": "4f873808-b9da-4f49-938f-ea71f239e131",
+      "name": "01_Create Lovable Prompt"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=\nResearch Target:  - {{ $json.fields.Category }} - {{ $json.fields['Business Name'] }} in {{ $json.fields.City }}, {{ $json.fields.State }}\nPhone: {{ $json.fields.Phone }}\nAddress: {{ $json.fields['Full Address'] }}\nGoogle Maps Profile: {{ $json.fields['Google URL'] }}\n\nCore Investigation:\nFind comprehensive information about this business/professional including:\n\nProfessional Background & Credentials\n\nEducational background and degrees\nProfessional licenses and certifications\nYears in practice/business\nPrevious positions or career progression\nProfessional associations and memberships\n\n\nSpecializations & Expertise\n\nPrimary areas of focus (for attorneys: practice areas; for doctors: specialties)\nUnique methodologies or approaches\nNotable cases, projects, or client types\nIndustry recognition or thought leadership\n\n\nAchievements & Recognition\n\nAwards and honors received\nMedia mentions or press coverage\nSpeaking engagements or conference presentations\nPublished articles, books, or research\nCommunity involvement and leadership roles\n\n\nBusiness Performance Indicators\n\nCompany size and team composition\nNotable clients or partnerships (if publicly available)\nBusiness milestones or anniversaries\nExpansion or growth indicators\n\n\nDigital Footprint Analysis\n\nLinkedIn profile highlights\nSocial media presence and engagement\nOnline reviews beyond Google (Avvo, Yelp, industry-specific platforms)\nVideo content or podcast appearances\nProfessional blog or content creation\n\n\nCompetitive Differentiators\n\nWhat makes them unique in their market\nPricing structure (if available)\nService guarantees or unique offerings\nTechnology adoption or innovation\n\n\nRecent Activity (Last 24 months)\n\nRecent news or announcements\nNew services or practice areas\nStaff changes or hires\nCommunity initiatives or sponsorships\n\n\n\nWebsite Creation Focus:\nIdentify 3-5 compelling story angles that would resonate with their target audience. Include specific proof points, statistics, or case examples that demonstrate expertise and build trust.\nOutput Format:\nOrganize findings by impact level - start with most impressive/unique discoveries that would strengthen website messaging and conversion.\n\nMAKE SURE THAT THE ONLY INFORMATION THAT'S EXTRACTED AND SUPPLIED IS DIRECTLY RELATED TO THIS SPECIFIC INDIVIDUAL AND BUSINESS... {{ $json.fields['Business Name'] }} NEVER MAKE UP ANY DATA, NEVER OUTPUT ANYTHING THAT IS FALSE, NEVER HALLUCINATE OR OUTPUT RESPONSES THAT ARE NOT 100% TRUE AND ACCURATE - REMEMBER, IT MUST BE RELATED TO THIS SPECIFIC LOCATION LOCATED IN {{ $json.fields.City }} AND THE STATE OF {{ $json.fields.State }}",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        592,
+        2064
+      ],
+      "id": "e305b182-f46a-41cf-9f9c-47be9f05b85b",
+      "name": "01_Deep Company Research"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f4f0700a-2373-4142-932e-9dcc8b921bf3",
+              "leftValue": "={{ $json.fields.iMessage }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "d5bcecef-197f-4d76-b3b6-b3dd5deaae16",
+              "leftValue": "={{ $json.fields['iMessage Status'] }}",
+              "rightValue": "Checked",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        352,
+        2080
+      ],
+      "id": "66d23aba-28c5-4886-95e3-b84fc48b6112",
+      "name": "Has iPhone"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://textlinksms.com/api/check-imessage",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "phone_number",
+              "value": "={{ $json['Phone Unformatted'] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1712,
+        1488
+      ],
+      "id": "93198efa-d340-4b31-a896-aad20b3861b0",
+      "name": "Has iMessage?",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "Emlq1vJb9qZzgiqQ",
+          "name": "iMessage API"
+        }
+      },
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json['Phone Unformatted'] }}",
+              "rightValue": false,
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              },
+              "id": "ca311f57-1c01-4792-9950-fff51db334d0"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1488,
+        1584
+      ],
+      "id": "b703e3e2-2cb8-468d-9951-493333f09a34",
+      "name": "Has Phone Number?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.apify.com/v2/acts/QjsMfzTZhU9qk5Qoy/runs",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer INSERT_YOUR_APIFY_API_KEY"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"url\": [\n    \"GetYourSite.com\",\n    \"YourSiteNow.com\",\n    \"BuildYourSite.com\",\n    \"PagePilot.com\",\n    \"SiteLift.com\",\n    \"LaunchPage.com\",\n    \"BuiltForYouSite.com\",\n    \"MadeForYouSite.com\",\n    \"CraftLaunch.com\",\n    \"SparkSite.com\",\n    \"WeBuiltIt.com\"\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        432,
+        3488
+      ],
+      "id": "6b596211-d39f-4155-9168-865ea06fd4ee",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "amount": 10
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        640,
+        3488
+      ],
+      "id": "09e495e2-c4b1-46d4-b80b-296770daba2b",
+      "name": "Wait 10sec.",
+      "webhookId": "42403c83-94e4-402d-bb6c-6f77d973d10e"
+    },
+    {
+      "parameters": {
+        "path": "1e209b83-92c6-4086-9353-0feed8ef71ac",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        848,
+        3488
+      ],
+      "id": "48b89d04-f0f9-4398-a33d-c81ac4936da1",
+      "name": "Webhook",
+      "webhookId": "1e209b83-92c6-4086-9353-0feed8ef71ac"
+    }
+  ],
+  "connections": {
+    "Search Form": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Search Terms": {
+      "main": [
+        [
+          {
+            "node": "Start Google Places Scraper",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Start Google Places Scraper": {
+      "main": [
+        [
+          {
+            "node": "Track Run in Airtable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Apify Webhook - Complete": {
+      "main": [
+        [
+          {
+            "node": "Get Scraper Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Scraper Results": {
+      "main": [
+        [
+          {
+            "node": "Process Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Results": {
+      "main": [
+        [
+          {
+            "node": "Insert Businesses to Airtable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Businesses to Airtable": {
+      "main": [
+        [
+          {
+            "node": "Get Pending iMessage Checks",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Update Run Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Pending iMessage Checks": {
+      "main": [
+        [
+          {
+            "node": "Process One at a Time",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process One at a Time": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Has Phone Number?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update iMessage Status": {
+      "main": [
+        [
+          {
+            "node": "Rate Limit Delay",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Invalid Phone": {
+      "main": [
+        [
+          {
+            "node": "Rate Limit Delay",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rate Limit Delay": {
+      "main": [
+        [
+          {
+            "node": "Process One at a Time",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Run Status": {
+      "main": [
+        []
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Parse Search Terms",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Airtable Trigger": {
+      "main": [
+        [
+          {
+            "node": "Has iPhone",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "01_Create Lovable Prompt",
+            "type": "ai_languageModel",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "01_Create Lovable Prompt",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Think": {
+      "ai_tool": [
+        [
+          {
+            "node": "01_Create Lovable Prompt",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a document": {
+      "main": [
+        [
+          {
+            "node": "Update a document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update a document": {
+      "main": [
+        []
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "01_Create Lovable Prompt",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process One at a Time1": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Has Valid Phone?1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check iMessage1": {
+      "main": [
+        [
+          {
+            "node": "Update iMessage Status1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update iMessage Status1": {
+      "main": [
+        [
+          {
+            "node": "Rate Limit Delay1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Invalid Phone1": {
+      "main": [
+        [
+          {
+            "node": "Rate Limit Delay1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rate Limit Delay1": {
+      "main": [
+        [
+          {
+            "node": "Process One at a Time1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Valid Phone?1": {
+      "main": [
+        [
+          {
+            "node": "Check iMessage1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mark Invalid Phone1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search records": {
+      "main": [
+        [
+          {
+            "node": "Process One at a Time1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search records1": {
+      "main": [
+        [
+          {
+            "node": "Deep Research",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "01_Deep Company Research",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Deep Research",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "02_Upload Lovable Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Simple Memory1": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Think1": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a document1": {
+      "main": [
+        [
+          {
+            "node": "Update a document1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update a document1": {
+      "main": [
+        []
+      ]
+    },
+    "01_Upload Lovable Prompt": {
+      "main": [
+        [
+          {
+            "node": "Create a document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "02_Upload Lovable Prompt": {
+      "main": [
+        [
+          {
+            "node": "Create a document1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Deep Research": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "01_Create Lovable Prompt": {
+      "main": [
+        [
+          {
+            "node": "01_Upload Lovable Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "01_Deep Company Research": {
+      "main": [
+        [
+          {
+            "node": "01_Create Lovable Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has iPhone": {
+      "main": [
+        [
+          {
+            "node": "01_Deep Company Research",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has iMessage?": {
+      "main": [
+        [
+          {
+            "node": "Update iMessage Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Phone Number?": {
+      "main": [
+        [
+          {
+            "node": "Has iMessage?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mark Invalid Phone",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Wait 10sec.",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": {
+    "node:Airtable Trigger": {
+      "lastTimeChecked": "2025-11-05T00:00:10Z"
+    }
+  },
+  "pinData": {
+    "Apify Webhook - Complete": [
+      {
+        "json": {
+          "headers": {
+            "host": "automationeffect.app.n8n.cloud",
+            "user-agent": "axios/1.8.4",
+            "content-length": "5430",
+            "accept": "application/json, text/plain, */*",
+            "accept-encoding": "gzip, br",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "13.216.180.86",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "US",
+            "cf-ray": "96e752c7534b916d-IAD",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "traceparent": "00-9a6e1b8dc38e551947f0623c4d673d92-89af4305d523ef7a-01",
+            "x-apify-request-origin": "WEBHOOK",
+            "x-apify-webhook": "yo",
+            "x-apify-webhook-dispatch-id": "K5FJn1XkjtoHBhgqt",
+            "x-forwarded-for": "13.216.180.86, 104.23.211.176",
+            "x-forwarded-host": "automationeffect.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-gwc-26-7b6dc7c86c-nml6j",
+            "x-is-trusted": "yes",
+            "x-real-ip": "13.216.180.86"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "userId": "4pNgSZFe5wXrALP9T",
+            "createdAt": "2025-08-13T09:53:03.522Z",
+            "eventType": "ACTOR.RUN.SUCCEEDED",
+            "eventData": {
+              "actorId": "nwua9Gu5YrADL7ZDj",
+              "actorRunId": "dn8ObwHaNd8PDyBdG"
+            },
+            "resource": {
+              "id": "dn8ObwHaNd8PDyBdG",
+              "actId": "nwua9Gu5YrADL7ZDj",
+              "userId": "4pNgSZFe5wXrALP9T",
+              "startedAt": "2025-08-13T09:49:25.922Z",
+              "finishedAt": "2025-08-13T09:52:57.115Z",
+              "status": "SUCCEEDED",
+              "statusMessage": "Scraping finished. You can view all scraped places laid out on a map on: https://api.apify.com/v2/key-value-stores/NKQnv0NGPbfvAt7mD/records/results-map. It can take some time to fully load for large datasets.",
+              "isStatusMessageTerminal": true,
+              "meta": {
+                "origin": "API",
+                "userAgent": "axios/1.8.3"
+              },
+              "stats": {
+                "inputBodyLen": 629,
+                "migrationCount": 0,
+                "rebootCount": 0,
+                "restartCount": 0,
+                "durationMillis": 210966,
+                "resurrectCount": 0,
+                "runTimeSecs": 210.966,
+                "metamorph": 0,
+                "computeUnits": 0.23440666666666668,
+                "memAvgBytes": 130926535.57824917,
+                "memMaxBytes": 158449664,
+                "memCurrentBytes": 109355008,
+                "cpuAvgUsage": 5.753666464427168,
+                "cpuMaxUsage": 121.34995073891626,
+                "cpuCurrentUsage": 1.9008564231738034,
+                "netRxBytes": 9991495,
+                "netTxBytes": 1359062
+              },
+              "options": {
+                "build": "latest",
+                "timeoutSecs": 604800,
+                "memoryMbytes": 4096,
+                "maxTotalChargeUsd": 28.590570886905045,
+                "diskMbytes": 8192
+              },
+              "buildId": "t7WzAp8aA9msvIwlB",
+              "exitCode": 0,
+              "defaultKeyValueStoreId": "NKQnv0NGPbfvAt7mD",
+              "defaultDatasetId": "EXQMZiozwpg0pKHA9",
+              "defaultRequestQueueId": "YSrJagJN0gK0IPmvB",
+              "pricingInfo": {
+                "pricingModel": "PAY_PER_EVENT",
+                "reasonForChange": "We are introducing Store pricing discounts for this Actor; more info in the follow-up email.",
+                "minimalMaxTotalChargeUsd": 0.5,
+                "createdAt": "2025-05-26T13:22:25.453Z",
+                "startedAt": "2025-05-26T13:22:25.453Z",
+                "apifyMarginPercentage": 0,
+                "notifiedAboutChangeAt": "2025-05-26T13:35:17.744Z",
+                "pricingPerEvent": {
+                  "actorChargeEvents": {
+                    "actor-start": {
+                      "eventTitle": "Actor start",
+                      "eventDescription": "Flat fee for starting an Actor run. <a href=\"https://help.apify.com/en/articles/10774732-google-maps-scraper-is-going-to-pay-per-event-pricing\">More details.</a>",
+                      "eventPriceUsd": 0.007
+                    },
+                    "place-scraped": {
+                      "eventTitle": "Place scraped",
+                      "eventDescription": "Cost per place successfully scraped from Google Maps. <a href=\"https://help.apify.com/en/articles/10774732-google-maps-scraper-is-going-to-pay-per-event-pricing\">More details.</a>",
+                      "eventPriceUsd": 0.004
+                    },
+                    "filter-applied": {
+                      "eventTitle": "Add-on: Filter applied",
+                      "eventDescription": "Extra cost per place for each filter applied (e.g. category, title match, minimum stars, website availability, or skipping closed places). Final price = places scraped * filter price * number of filters. <a href=\"https://help.apify.com/en/articles/10774732-google-maps-scraper-is-going-to-pay-per-event-pricing\">More details.</a>",
+                      "eventPriceUsd": 0.001
+                    },
+                    "place-details-scraped": {
+                      "eventTitle": "Add-on: Additional place details scraped",
+                      "eventDescription": "Flat cost per place to retrieve additional place details (e.g. table reservation data, web results, or max questions). The price remains the same no matter how many details you select. <a href=\"https://help.apify.com/en/articles/10774732-google-maps-scraper-is-going-to-pay-per-event-pricing\">More details.</a>",
+                      "eventPriceUsd": 0.002
+                    },
+                    "contact-details-scraped": {
+                      "eventTitle": "Add-on: Company contacts enrichment",
+                      "eventDescription": "Extra cost per place for finding the associated web page and extracting contact information (e.g. social media accounts or company email). <a href=\"https://help.apify.com/en/articles/10774732-google-maps-scraper-is-going-to-pay-per-event-pricing\">More details.</a>",
+                      "eventPriceUsd": 0.002
+                    },
+                    "lead-scraped": {
+                      "eventTitle": "Add-on: Business leads enrichment",
+                      "eventDescription": "Cost per successfully extracted business lead. Get key prospect details: full name, work email, phone number, job title, and LinkedIn profile. Enable the 'scrape places with website' filter to only show places that have an active website. <a href=\"https://help.apify.com/en/articles/10774732-google-maps-scraper-is-going-to-pay-per-event-pricing\">More details.</a>",
+                      "eventPriceUsd": 0.005
+                    },
+                    "review-scraped": {
+                      "eventTitle": "Add-on: Review scraped",
+                      "eventDescription": "Extra cost per individual review scraped. <a href=\"https://help.apify.com/en/articles/10774732-google-maps-scraper-is-going-to-pay-per-event-pricing\">More details.</a>",
+                      "eventPriceUsd": 0.0005
+                    },
+                    "image-scraped": {
+                      "eventTitle": "Add-on: Image scraped",
+                      "eventDescription": "Extra cost per image retrieved from a place, including author details. <a href=\"https://help.apify.com/en/articles/10774732-google-maps-scraper-is-going-to-pay-per-event-pricing\">More details.</a>",
+                      "eventPriceUsd": 0.0005
+                    }
+                  }
+                }
+              },
+              "chargedEventCounts": {
+                "actor-start": 1,
+                "place-scraped": 12,
+                "filter-applied": 24,
+                "place-details-scraped": 12,
+                "contact-details-scraped": 0,
+                "lead-scraped": 0,
+                "review-scraped": 0,
+                "image-scraped": 0
+              },
+              "platformUsageBillingModel": "DEVELOPER",
+              "accountedChargedEventCounts": {
+                "actor-start": 1,
+                "place-scraped": 12,
+                "filter-applied": 24,
+                "place-details-scraped": 12,
+                "contact-details-scraped": 0,
+                "lead-scraped": 0,
+                "review-scraped": 0,
+                "image-scraped": 0
+              },
+              "generalAccess": "FOLLOW_USER_SETTING",
+              "buildNumber": null,
+              "containerUrl": "https://8uc4sukjubub.runs.apify.net",
+              "usageTotalUsd": 0.10300000000000001,
+              "links": {
+                "publicRunUrl": "https://console.apify.com/view/runs/dn8ObwHaNd8PDyBdG",
+                "consoleRunUrl": "https://console.apify.com/actors/nwua9Gu5YrADL7ZDj/runs/dn8ObwHaNd8PDyBdG",
+                "apiRunUrl": "https://api.apify.com/v2/actor-runs/dn8ObwHaNd8PDyBdG"
+              }
+            }
+          },
+          "webhookUrl": "https://automationeffect.app.n8n.cloud/webhook/google-places-complete",
+          "executionMode": "production"
+        }
+      }
+    ],
+    "Airtable Trigger": [
+      {
+        "json": {
+          "id": "recK129Pu3B3cvaqo",
+          "createdTime": "2025-08-13T07:22:08.000Z",
+          "fields": {
+            "Business Name": "Brian J Kellogg Law Office",
+            "Score": 0,
+            "Reviews": 0,
+            "Street": "901 E Brighton Ave",
+            "City": "Syracuse",
+            "State": "New York",
+            "Country": "US",
+            "Phone": "(315) 558-8702",
+            "Phone Unformatted": "+13155588702",
+            "Category": "Attorney",
+            "Google URL": "https://www.google.com/maps/search/?api=1&query=Brian%20J%20Kellogg%20Law%20Office&query_place_id=ChIJj3g3WYr02YkRNrfSEL-V6Wc",
+            "iMessage Status": "Checked",
+            "iMessage": "true",
+            "Dataset ID": "R0yddQielroR34wgi",
+            "Scraped At": "2025-08-13T06:12:42.839Z",
+            "Full Address": "901 E Brighton Ave, Syracuse, NY 13205",
+            "Review Score Summary": "No reviews",
+            "Rank": 0,
+            "⭐️⭐️⭐️⭐️⭐️": 0,
+            "Run ID": "R0yddQielroR34wgi",
+            "⭐️⭐️⭐️⭐️": 0,
+            "⭐️⭐️⭐️": 0,
+            "⭐️⭐️": 0,
+            "⭐️": 0,
+            "Created Time": "2025-08-13T07:22:08.000Z"
+          }
+        }
+      }
+    ]
+  },
+  "triggerCount": 4,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}
