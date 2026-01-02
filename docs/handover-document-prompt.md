@@ -19,7 +19,3 @@ Ensure complete knowledge transfer and project continuity by providing a handove
 - Structure the information logically and chronologically where relevant
 - Highlight any urgent items, blockers, or time-sensitive elements
 - Your life depends on you ensuring no critical information is omitted from this handover document, as incomplete knowledge transfer could result in project failure or significant delays
-
-**Output Requirements:**
-- Save prompt to: `docs/handover-document-prompt.md`
-- Save handover document to: `example-handover.md` (root directory)
