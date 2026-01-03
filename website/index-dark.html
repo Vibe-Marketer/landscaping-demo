@@ -1,0 +1,476 @@
+<html lang="en" class="scroll-smooth"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simply Soil | Customized Lawn Care &amp; Landscape Services</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.iconify.design/3/3.1.0/iconify.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&amp;display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --font-main: 'Inter', sans-serif;
+            --color-emerald: #047857;
+            --color-sand: #f5f5f4;
+        }
+        body {
+            font-family: var(--font-main);
+            background-color: #fafaf9; /* Stone-50 */
+            color: #1c1917; /* Stone-900 */
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Typography Tweaks for Linear Style */
+        h1, h2, h3, h4, h5, h6 {
+            letter-spacing: -0.025em; /* tracking-tight */
+        }
+
+        /* Icon Stroke Width Control */
+        .iconify {
+            stroke-width: 1.5px !important;
+        }
+
+        /* Smooth Reveal Animation */
+        .reveal {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Subtle Gradient Text */
+        .text-gradient {
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-image: linear-gradient(to right, #1c1917, #059669);
+        }
+
+        /* Modern Button Styles (Linear/Vercel inspired) */
+        .btn-primary {
+            position: relative;
+            background: #1c1917;
+            color: white;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            overflow: hidden;
+            border: 1px solid transparent;
+        }
+        .btn-primary:hover {
+            background: #292524;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        /* Card Hover Effects */
+        .service-card {
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .service-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.05);
+            border-color: #a8a29e;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f5f5f4;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #d6d3d1;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a29e;
+        }
+
+        /* Floating Label Logic */
+        .floating-input:focus ~ label,
+        .floating-input:not(:placeholder-shown) ~ label {
+            top: -0.7rem;
+            left: 0.5rem;
+            font-size: 0.75rem;
+            color: #059669;
+            background-color: #fafaf9;
+            padding: 0 0.25rem;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+    </style>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // Scroll Reveal Observer
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('active');
+                    }
+                });
+            }, { threshold: 0.05 });
+            document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+        });
+    </script>
+</head>
+<body class="selection:bg-emerald-100 selection:text-emerald-900 text-stone-400 bg-stone-950">
+
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full z-50 glass-panel">
+        <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+            <!-- Logo -->
+            <a href="#" class="flex items-center gap-2 group">
+                <div class="w-8 h-8 border rounded-md flex items-center justify-center transition-colors bg-emerald-300/10 border-emerald-300/20 text-emerald-200">
+                    <span class="iconify" data-icon="lucide:leaf" data-width="16"></span>
+                </div>
+                <span class="text-sm font-medium tracking-tight text-stone-100">Simply Soil</span>
+            </a>
+
+            <!-- Desktop Links -->
+            <div class="hidden md:flex items-center gap-8">
+                <a href="#hero" class="text-xs font-medium text-stone-500 transition-colors hover:text-stone-100">Home</a>
+                <a href="#about" class="text-xs font-medium text-stone-500 transition-colors hover:text-stone-100">About</a>
+                <a href="#services" class="text-xs font-medium text-stone-500 transition-colors hover:text-stone-100">Services</a>
+                <a href="#contact" class="text-xs font-medium text-stone-500 transition-colors hover:text-stone-100">Contact</a>
+            </div>
+
+            <a href="#contact" class="hidden md:inline-flex items-center justify-center px-4 py-2 text-xs font-medium rounded-md transition-colors bg-stone-100 text-black hover:bg-stone-200">
+                Get a Quote
+            </a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="hero" class="relative min-h-[90vh] flex items-center justify-center overflow-hidden pt-20">
+        <!-- Background Imagery -->
+        <div class="absolute inset-0 z-0">
+            <!-- Used a generic high quality grass/lawn texture -->
+            <img src="https://images.unsplash.com/photo-1558293842-c0fd3db86157?q=80&amp;w=2548&amp;auto=format&amp;fit=crop" alt="Pristine Lawn" class="w-full h-full object-cover opacity-30 grayscale-[20%]">
+            <div class="absolute inset-0 bg-gradient-to-b from-stone-950/80 via-stone-950/90 to-stone-950"></div>
+        </div>
+
+        <div class="relative z-20 max-w-4xl mx-auto px-6 w-full text-center">
+            <div class="reveal">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border text-stone-500 text-[10px] font-medium uppercase tracking-widest mb-8 shadow-sm bg-black border-stone-800">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    Serving Leonardo, NJ &amp; Surrounding Areas
+                </div>
+                <h1 class="text-5xl md:text-7xl font-medium tracking-tight leading-[1.05] mb-6 text-stone-100">
+                    Full Season <br> <span class="text-emerald-300">Personalized</span> Care.
+                </h1>
+                <p class="text-lg text-stone-500 max-w-lg mx-auto mb-10 leading-relaxed font-light">
+                    Our seven-step lawn care program is designed for the specific needs of your property. Experience the Simply Soil difference.
+                </p>
+
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <a href="#contact" class="btn-primary group inline-flex items-center justify-center px-8 py-3.5 rounded-md shadow-lg shadow-stone-100/10">
+                        <span class="text-sm font-medium tracking-wide">Start Your Program</span>
+                        <span class="iconify ml-2 group-hover:translate-x-1 transition-transform" data-icon="lucide:arrow-right" data-width="16"></span>
+                    </a>
+                    <a href="#services" class="inline-flex items-center justify-center px-8 py-3.5 border rounded-md transition-all shadow-sm bg-black border-stone-800 text-stone-400 hover:bg-stone-950 hover:border-stone-700">
+                        <span class="text-sm font-medium tracking-wide">View All Services</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Core Programs Section -->
+    <section id="about" class="py-24 relative border-y bg-black border-stone-900">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid md:grid-cols-2 gap-16 items-center">
+                <div class="reveal">
+                    <span class="font-medium tracking-widest text-xs uppercase mb-3 block text-emerald-400">Our Approach</span>
+                    <h2 class="text-3xl md:text-4xl font-medium mb-6 tracking-tight text-stone-100">Customized Lawn Care Programs</h2>
+                    <p class="text-stone-500 mb-6 leading-relaxed text-sm md:text-base">
+                        Our seven-step lawn care program is a full season of personalized care for the needs of your property. We don't believe in one-size-fits-all solutions; we analyze your soil and turf to deliver exactly what it needs, when it needs it.
+                    </p>
+
+                    <div class="space-y-4 mt-8">
+                        <div class="flex items-start gap-3">
+                            <div class="mt-1 text-emerald-400">
+                                <span class="iconify" data-icon="lucide:check-circle" data-width="20"></span>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-medium text-stone-100">7-Step Application</h3>
+                                <p class="text-xs text-stone-500 mt-1">Comprehensive nutrient and protection cycle.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <div class="mt-1 text-emerald-400">
+                                <span class="iconify" data-icon="lucide:scan-eye" data-width="20"></span>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-medium text-stone-100">Personalized Analysis</h3>
+                                <p class="text-xs text-stone-500 mt-1">Treatments adapted to your specific soil composition.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="reveal delay-100 rounded-2xl p-2 border bg-stone-950 border-stone-900">
+                   <div class="h-full w-full rounded-xl overflow-hidden relative border aspect-video md:aspect-square bg-black border-stone-900">
+                        <img src="https://images.unsplash.com/photo-1592419044706-39796d40f98c?q=80&amp;w=2625&amp;auto=format&amp;fit=crop" alt="Green Lawn Close up" class="absolute inset-0 w-full h-full object-cover hover:scale-105 transition-transform duration-700">
+                   </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Grid -->
+    <section id="services" class="py-24 bg-stone-950">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="max-w-2xl mb-16 reveal">
+                <span class="font-medium tracking-widest text-xs uppercase mb-2 block text-emerald-400">What We Do</span>
+                <h2 class="text-3xl font-medium tracking-tight text-stone-100">Complete Property Management</h2>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+                <!-- Service 1: Tree & Shrub -->
+                <div class="reveal service-card p-8 rounded-xl border shadow-sm relative group lg:col-span-2 bg-black border-stone-800/60">
+                    <div class="w-10 h-10 rounded-lg flex items-center justify-center mb-5 bg-emerald-950 text-emerald-300">
+                        <span class="iconify" data-icon="lucide:trees" data-width="20"></span>
+                    </div>
+                    <h3 class="text-lg font-medium mb-3 text-stone-100">Tree and Shrub Care Program</h3>
+                    <p class="text-sm text-stone-500 leading-relaxed max-w-2xl">
+                        One of our most underrated services by far. This program is a once a month, seven-step application. It's designed to maximize blooms, color and overall health while protecting your trees and shrubs from the elements.
+                    </p>
+                </div>
+
+                <!-- Service 2: Mosquito -->
+                <div class="reveal delay-100 service-card p-8 rounded-xl border shadow-sm relative group bg-black border-stone-800/60">
+                    <div class="w-10 h-10 rounded-lg flex items-center justify-center mb-5 bg-emerald-950 text-emerald-300">
+                        <span class="iconify" data-icon="lucide:shield-check" data-width="20"></span>
+                    </div>
+                    <h3 class="text-lg font-medium mb-3 text-stone-100">Mosquito and Tick Control</h3>
+                    <p class="text-sm text-stone-500 leading-relaxed">
+                        An important program designed to minimize mosquito and tick activity. This increases comfort and decreases the potential spread of disease on your property.
+                    </p>
+                </div>
+
+                <!-- Service 3: Aeration -->
+                <div class="reveal delay-100 service-card p-8 rounded-xl border shadow-sm relative group bg-black border-stone-800/60">
+                    <div class="w-10 h-10 rounded-lg flex items-center justify-center mb-5 bg-emerald-950 text-emerald-300">
+                        <span class="iconify" data-icon="lucide:wind" data-width="20"></span>
+                    </div>
+                    <h3 class="text-lg font-medium mb-3 text-stone-100">Core Aeration and Overseed</h3>
+                    <p class="text-sm text-stone-500 leading-relaxed">
+                        The single most beneficial thing you can do for your lawn (Spring and Fall). Aeration opens up draining, loosens soil and gives your lawn's root system a chance to spread and strengthen.
+                    </p>
+                </div>
+
+                <!-- Service 4: Mowing -->
+                <div class="reveal delay-100 service-card p-8 rounded-xl border shadow-sm relative group bg-black border-stone-800/60">
+                    <div class="w-10 h-10 rounded-lg flex items-center justify-center mb-5 bg-emerald-950 text-emerald-300">
+                        <span class="iconify" data-icon="lucide:scissors" data-width="20"></span>
+                    </div>
+                    <h3 class="text-lg font-medium mb-3 text-stone-100">Lawn Mowing</h3>
+                    <p class="text-sm text-stone-500 leading-relaxed">
+                        Weekly lawn mowing services that include edging and blowing. Consistent cuts for a manicured look.
+                    </p>
+                </div>
+
+                <!-- Service 5: Mulch -->
+                <div class="reveal delay-100 service-card p-8 rounded-xl border shadow-sm relative group bg-black border-stone-800/60">
+                    <div class="w-10 h-10 rounded-lg flex items-center justify-center mb-5 bg-emerald-950 text-emerald-300">
+                        <span class="iconify" data-icon="lucide:flower-2" data-width="20"></span>
+                    </div>
+                    <h3 class="text-lg font-medium mb-3 text-stone-100">Mulch Bed Applications</h3>
+                    <p class="text-sm text-stone-500 leading-relaxed">
+                        We remove any existing weeds from mulch beds by pulling from the root followed by applying a preventative twice per year. This ensures beds stay weed-free all season.
+                    </p>
+                </div>
+
+                <!-- Service 6: Lighting -->
+                <div class="reveal delay-200 service-card p-8 rounded-xl border shadow-sm relative group lg:col-span-2 bg-black border-stone-800/60">
+                    <div class="w-10 h-10 rounded-lg flex items-center justify-center mb-5 bg-emerald-950 text-emerald-300">
+                        <span class="iconify" data-icon="lucide:lightbulb" data-width="20"></span>
+                    </div>
+                    <div class="flex flex-col md:flex-row gap-6 justify-between">
+                        <div>
+                            <h3 class="text-lg font-medium mb-3 text-stone-100">Landscape Lighting</h3>
+                            <p class="text-sm text-stone-500 leading-relaxed max-w-md">
+                                No more easily broken, cheap plastic solar lights that burn out. Have your property hardwired with a wide variety of fixtures and options for control to take entertaining to the next level.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Service 7: Special Jobs -->
+                <div class="reveal delay-200 service-card p-8 rounded-xl border shadow-sm relative group bg-black border-stone-800/60">
+                    <div class="w-10 h-10 rounded-lg flex items-center justify-center mb-5 bg-emerald-950 text-emerald-300">
+                        <span class="iconify" data-icon="lucide:hammer" data-width="20"></span>
+                    </div>
+                    <h3 class="text-lg font-medium mb-3 text-stone-100">Special Jobs</h3>
+                    <p class="text-sm text-stone-500 leading-relaxed">
+                        We offer a variety of additional jobs starting from simple changes to your yard all the way to complete refurbishments.
+                    </p>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="py-24 border-t bg-black border-stone-900">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid md:grid-cols-2 gap-12 lg:gap-24 items-start">
+
+                <!-- Contact Form -->
+                <div class="reveal p-8 rounded-2xl border bg-stone-950 border-stone-800/60">
+                    <h2 class="text-2xl font-medium mb-2 text-stone-100">Get a Free Estimate</h2>
+                    <p class="text-sm text-stone-500 mb-8">Ready to transform your lawn? Fill out the details below.</p>
+
+                    <form action="#" class="space-y-5">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="relative">
+                                <input type="text" id="fname" class="floating-input peer block w-full appearance-none rounded-md border px-4 py-3 text-sm focus:border-emerald-600 focus:outline-none focus:ring-0 border-stone-800 bg-black text-stone-100" placeholder=" ">
+                                <label for="fname" class="absolute left-4 top-3 z-10 origin-[0] -translate-y-0 scale-100 transition-transform duration-300 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-focus:scale-90 peer-focus:-translate-y-0 text-stone-600">First Name</label>
+                            </div>
+                            <div class="relative">
+                                <input type="text" id="lname" class="floating-input peer block w-full appearance-none rounded-md border px-4 py-3 text-sm focus:border-emerald-600 focus:outline-none focus:ring-0 border-stone-800 bg-black text-stone-100" placeholder=" ">
+                                <label for="lname" class="absolute left-4 top-3 z-10 origin-[0] -translate-y-0 scale-100 transition-transform duration-300 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-focus:scale-90 peer-focus:-translate-y-0 text-stone-600">Last Name</label>
+                            </div>
+                        </div>
+                        <div class="relative">
+                            <input type="email" id="email" class="floating-input peer block w-full appearance-none rounded-md border px-4 py-3 text-sm focus:border-emerald-600 focus:outline-none focus:ring-0 border-stone-800 bg-black text-stone-100" placeholder=" ">
+                            <label for="email" class="absolute left-4 top-3 z-10 origin-[0] -translate-y-0 scale-100 transition-transform duration-300 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-focus:scale-90 peer-focus:-translate-y-0 text-stone-600">Email Address</label>
+                        </div>
+                        <div class="relative">
+                            <input type="tel" id="phone" class="floating-input peer block w-full appearance-none rounded-md border px-4 py-3 text-sm focus:border-emerald-600 focus:outline-none focus:ring-0 border-stone-800 bg-black text-stone-100" placeholder=" ">
+                            <label for="phone" class="absolute left-4 top-3 z-10 origin-[0] -translate-y-0 scale-100 transition-transform duration-300 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-focus:scale-90 peer-focus:-translate-y-0 text-stone-600">Phone Number</label>
+                        </div>
+
+                        <!-- Service Selection (Custom Checkboxes) -->
+                        <div class="pt-2">
+                            <span class="text-xs font-medium block mb-3 text-stone-100">Interested Services</span>
+                            <div class="space-y-2">
+                                <label class="flex items-center gap-3 cursor-pointer group">
+                                    <input type="checkbox" class="peer sr-only">
+                                    <div class="w-4 h-4 border rounded peer-checked:bg-emerald-600 peer-checked:border-emerald-600 transition-colors flex items-center justify-center border-stone-700 bg-black">
+                                        <span class="iconify opacity-0 peer-checked:opacity-100 text-black" data-icon="lucide:check" data-width="12"></span>
+                                    </div>
+                                    <span class="text-sm text-stone-500 group-hover:text-stone-900 transition-colors">Lawn Care Program</span>
+                                </label>
+                                <label class="flex items-center gap-3 cursor-pointer group">
+                                    <input type="checkbox" class="peer sr-only">
+                                    <div class="w-4 h-4 border rounded peer-checked:bg-emerald-600 peer-checked:border-emerald-600 transition-colors flex items-center justify-center border-stone-700 bg-black">
+                                        <span class="iconify opacity-0 peer-checked:opacity-100 text-black" data-icon="lucide:check" data-width="12"></span>
+                                    </div>
+                                    <span class="text-sm text-stone-500 group-hover:text-stone-900 transition-colors">Tick &amp; Mosquito Control</span>
+                                </label>
+                                <label class="flex items-center gap-3 cursor-pointer group">
+                                    <input type="checkbox" class="peer sr-only">
+                                    <div class="w-4 h-4 border rounded peer-checked:bg-emerald-600 peer-checked:border-emerald-600 transition-colors flex items-center justify-center border-stone-700 bg-black">
+                                        <span class="iconify opacity-0 peer-checked:opacity-100 text-black" data-icon="lucide:check" data-width="12"></span>
+                                    </div>
+                                    <span class="text-sm text-stone-500 group-hover:text-stone-900 transition-colors">Landscape Lighting</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="relative">
+                            <textarea id="message" rows="3" class="floating-input peer block w-full appearance-none rounded-md border px-4 py-3 text-sm focus:border-emerald-600 focus:outline-none focus:ring-0 border-stone-800 bg-black text-stone-100" placeholder=" "></textarea>
+                            <label for="message" class="absolute left-4 top-3 z-10 origin-[0] -translate-y-0 scale-100 transition-transform duration-300 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-focus:scale-90 peer-focus:-translate-y-0 text-stone-600">Message</label>
+                        </div>
+
+                        <button type="button" class="btn-primary w-full py-3.5 rounded-md font-medium flex justify-center items-center gap-2 group text-sm">
+                            Submit Request
+                            <span class="iconify group-hover:text-white transition-colors text-stone-700" data-icon="lucide:arrow-right" data-width="16"></span>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Info & Map -->
+                <div class="reveal delay-100 flex flex-col h-full">
+                    <div class="mb-10">
+                        <h2 class="text-2xl font-medium mb-6 text-stone-100">Contact Us</h2>
+                        <div class="space-y-8">
+                            <div class="flex items-start gap-4">
+                                <div class="w-10 h-10 rounded-full border shadow-sm flex items-center justify-center shrink-0 bg-black border-stone-900 text-emerald-300">
+                                    <span class="iconify" data-icon="lucide:map-pin" data-width="18"></span>
+                                </div>
+                                <div>
+                                    <h4 class="font-medium text-sm text-stone-100">Address</h4>
+                                    <p class="text-sm text-stone-500 leading-relaxed mt-1">934 NJ-36, Leonardo, NJ 07737, US</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-4">
+                                <div class="w-10 h-10 rounded-full border shadow-sm flex items-center justify-center shrink-0 bg-black border-stone-900 text-emerald-300">
+                                    <span class="iconify" data-icon="lucide:phone" data-width="18"></span>
+                                </div>
+                                <div>
+                                    <h4 class="font-medium text-sm text-stone-100">Phone</h4>
+                                    <a href="tel:848-200-8079" class="text-sm text-stone-500 transition-colors block mt-1 hover:text-emerald-300">(848) 200-8079</a>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-4">
+                                <div class="w-10 h-10 rounded-full border shadow-sm flex items-center justify-center shrink-0 bg-black border-stone-900 text-emerald-300">
+                                    <span class="iconify" data-icon="lucide:mail" data-width="18"></span>
+                                </div>
+                                <div>
+                                    <h4 class="font-medium text-sm text-stone-100">Email</h4>
+                                    <a href="mailto:info@simply-soil.com" class="text-sm text-stone-500 transition-colors block mt-1 hover:text-emerald-300">info@simply-soil.com</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Map Embed -->
+                    <div class="w-full h-80 rounded-xl overflow-hidden shadow-sm border relative group border-stone-800">
+                         <div class="absolute inset-0 bg-stone-500/10 pointer-events-none z-10 group-hover:bg-transparent transition-colors duration-500"></div>
+                         <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3036.5684659427656!2d-74.06225968460368!3d40.41553597936528!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89c237b673d3284f%3A0x6b6d5c5678123456!2s934%20NJ-36%2C%20Leonardo%2C%20NJ%2007737%2C%20USA!5e0!3m2!1sen!2sus!4v1700000000000!5m2!1sen!2sus" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade" class="grayscale hover:grayscale-0 transition-all duration-700"></iframe>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="text-stone-500 py-12 border-t bg-stone-950 border-stone-800">
+        <div class="max-w-7xl mx-auto px-6 grid md:grid-cols-4 gap-8">
+            <div class="col-span-1 md:col-span-2">
+                <div class="flex items-center gap-2 mb-4">
+                    <div class="w-6 h-6 rounded-sm flex items-center justify-center text-xs bg-emerald-300 text-black">S</div>
+                    <span class="font-medium tracking-tight text-stone-100">Simply Soil</span>
+                </div>
+                <p class="text-xs max-w-sm leading-relaxed">
+                    Simply Soil provides professional landscaping, lawn care programs, and hardscaping services to Leonardo, NJ and surrounding areas.
+                </p>
+            </div>
+            <div>
+                <h4 class="text-xs font-semibold uppercase tracking-widest mb-4 text-stone-100">Programs</h4>
+                <ul class="space-y-2 text-xs">
+                    <li class="transition-colors cursor-pointer hover:text-emerald-300">Lawn Care</li>
+                    <li class="transition-colors cursor-pointer hover:text-emerald-300">Tree &amp; Shrub Care</li>
+                    <li class="transition-colors cursor-pointer hover:text-emerald-300">Tick &amp; Mosquito</li>
+                    <li class="transition-colors cursor-pointer hover:text-emerald-300">Core Aeration</li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="text-xs font-semibold uppercase tracking-widest mb-4 text-stone-100">Contact</h4>
+                <div class="space-y-2 text-xs">
+                    <p>934 NJ-36, Leonardo, NJ 07737</p>
+                    <a href="tel:848-200-8079" class="transition-colors hover:text-emerald-300 block">(848) 200-8079</a>
+                    <a href="mailto:info@simply-soil.com" class="transition-colors hover:text-emerald-300">info@simply-soil.com</a>
+                </div>
+            </div>
+        </div>
+        <div class="max-w-7xl mx-auto px-6 mt-12 pt-8 border-t flex flex-col md:flex-row justify-between items-center text-[10px] uppercase tracking-wider border-stone-800 text-stone-600">
+            <p>© 2025 Simply Soil. All rights reserved.</p>
+            <p>Designed with care</p>
+        </div>
+    </footer>
+
+</body></html>
